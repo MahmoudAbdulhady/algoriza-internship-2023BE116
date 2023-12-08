@@ -1,4 +1,5 @@
 ﻿
+using Application.Contracts;
 using Application.Services;
 using Domain.DTOS;
 using Domain.Entities;
@@ -12,54 +13,20 @@ namespace Veezta.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AdminController : Controller
+    public class AdminController : ControllerBase
     {
-        private readonly AdminServices _adminServices;
+        private readonly IAdminService _adminServices;
         private readonly UserManager<CustomUser> _userManager;
 
-        public AdminController(AdminServices adminServices , UserManager<CustomUser> userManager)
+        public AdminController(IAdminService adminServices , UserManager<CustomUser> userManager)
         {
             _adminServices = adminServices;
             _userManager = userManager;
         }
 
 
-        [HttpPost("upload-image")]
-        public async Task<IActionResult> UploadImage(IFormFile image)
-        {
-            if(image == null || image.Length == 0)
-            {
-                return BadRequest("No File Uploaded");
-            }
-
-            // Generate a unique file name to prevent overwriting existing files
-            var fileName = Guid.NewGuid().ToString() + Path.GetExtension(image.FileName);
-            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", fileName);
-
-            // Save the image to the 'wwwroot/images' folder
-            using (var stream = new FileStream(filePath, FileMode.Create))
-            {
-                await image.CopyToAsync(stream);
-            }
-
-            // Assuming you get the user from the User Identity
-            var users = await _userManager.Users.Where(u => u.AccountRole == AccountRole.Doctor).ToListAsync();
-            if (users != null)
-            {
-                foreach (var user in users)
-                {
-                    user.ImageUrl = fileName;
-                    await _userManager.UpdateAsync(user);
-                }
-            }
-
-            return Ok(new { fileName });
-
-
-        }
-
         [HttpPost("AddDoctor")]
-        public async Task<IActionResult> AddAddDoctor([FromBody] DoctorRegisterDTO model)
+        public async Task<IActionResult> AddAddDoctor([FromForm] DoctorRegisterDTO model)
         {
             if (ModelState.IsValid)
             {
@@ -84,7 +51,7 @@ namespace Veezta.Controllers
             return Ok(doctor);
         }
 
-        [HttpDelete]
+        [HttpDelete("DeleteDoctorById")]
         public async Task<IActionResult> DeleteDoctorById(int doctorId)
         {
             var result = await _adminServices.DeleteDoctorAsync(doctorId);
@@ -177,6 +144,21 @@ namespace Veezta.Controllers
             var numberOfRequests = await _adminServices.GetNumberOfRequestsAsync();
             return Ok(numberOfRequests);
         }
+
+        [HttpGet("NumOfDoctorsInTheLast24")]
+        public async Task<IActionResult> NumOfDoctorsInTheLast24()
+        {
+            int count = await _adminServices.GetNumberOfDoctorsAddedLast24HoursAsync();
+            return Ok(count);
+        }
+
+        [HttpPost("sendEmail/{doctorId}")]
+        public async Task<IActionResult> SendEmailToDoctor(string doctorId)
+        {
+            await _adminServices.SendEmailToDoctorAsync(doctorId);
+            return Ok("Email sent successfully.");
+        }
+
 
 
 

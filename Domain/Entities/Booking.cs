@@ -17,6 +17,7 @@ namespace Domain.Entities
         //PatientId & Navigation Property 
         public string PatientId { get; set; }
         public CustomUser Patient { get; set; }
+        public bool IsCouponUsed { get; set; }
 
 
         //AppointnmentId & Navigation Property 
@@ -29,6 +30,13 @@ namespace Domain.Entities
 
         //BookingStatus (Default value is: Pending)
         public BookingStatus Status { get; set; } = BookingStatus.Pending;
+
+
+
+        //ForCouponSettings
+        public int Price { get; set; }
+        public int PriceAfterCoupon { get; set; }
+
 
     }
 }

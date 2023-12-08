@@ -76,7 +76,6 @@ namespace Infrastrucutre.Repositories
             return (doctors, totalCount);
         }
 
-        // TODO sadjajgjhdf;g;h 
         public async Task<int> NumberOfPatients()
         {
             return await _userManager.Users.CountAsync(u => u.AccountRole == AccountRole.Patient);
@@ -150,6 +149,14 @@ namespace Infrastrucutre.Repositories
             };
 
             return statusCounts;
+        }
+        public async Task<int> GetNumberOfDoctorsAddedLast24HoursAsync()
+        {
+            var currentDate = DateTime.UtcNow;
+            var date24HoursAgo = currentDate.AddHours(-24);
+
+            return await _veeztaDbContext.Doctors
+                .CountAsync(d => d.CreatedDate >= date24HoursAgo && d.CreatedDate <= currentDate);
         }
     }
 }

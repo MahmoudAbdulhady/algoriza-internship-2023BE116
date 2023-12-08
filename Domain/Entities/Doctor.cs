@@ -15,6 +15,8 @@ namespace Domain.Entities
         public int DoctorId { get; set; }// Prrimary Key
         public string UserId { get; set; } // foregin Key
 
+        public DateTime CreatedDate { get; set; }
+
 
         // Navigation Property (Identity Table)
         public CustomUser User { get; set; } 
@@ -29,9 +31,6 @@ namespace Domain.Entities
         public int SpecializationId { get; set; }
         public Specialization Specialization { get; set; }
 
-
-
-  
 
 
     }

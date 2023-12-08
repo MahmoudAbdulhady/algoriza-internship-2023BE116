@@ -1,4 +1,5 @@
 
+using Application.Contracts;
 using Application.Services;
 using Domain.Entities;
 using Domain.Enums;
@@ -28,6 +29,11 @@ builder.Services.AddDbContext<VeeztaDbContext>(options =>
 builder.Services.AddIdentity<CustomUser, IdentityRole>(options =>
 {
     options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
+    options.Password.RequireDigit = true; // Requires a number
+    options.Password.RequireLowercase = true; // Requires lowercase letter
+    options.Password.RequireUppercase = true; // Requires uppercase letter
+    options.Password.RequiredLength = 8; // Set the minimum length here
+    options.Password.RequireNonAlphanumeric = true; // Set to true if you require a non-alphanumeric character
 })
             .AddEntityFrameworkStores<VeeztaDbContext>()
             .AddDefaultTokenProviders();
@@ -37,9 +43,27 @@ builder.Services.AddScoped(typeof(IAdminRepository), typeof(AdminRepository));
 builder.Services.AddScoped<ISpecializationRepository,  SpecailizationRepoistory>();
 builder.Services.AddScoped<IDoctorRepository, DoctorRepository>();
 builder.Services.AddScoped<IPatientRepository, PatientRepoistory>();
-builder.Services.AddScoped<AdminServices>();
-builder.Services.AddScoped<DoctorService>();
-builder.Services.AddScoped<PatientService>();
+builder.Services.AddScoped<ICouponRepository, CouponRepository>();
+builder.Services.AddScoped< IDoctorService , DoctorService>();
+builder.Services.AddScoped<IPatientService ,PatientService>();
+builder.Services.AddScoped<ICouponService, CouponService>();
+builder.Services.AddScoped<IAdminService, AdminServices>();
+
+
+
+var smtpSettings = builder.Configuration.GetSection("SmtpSettings").Get<SmtpSettings>();
+builder.Services.AddSingleton(smtpSettings);
+builder.Services.AddScoped<IEmailSender, EmailSender>();
+
+
+
+
+
+
+
+
+
+
 
 
 var app = builder.Build();

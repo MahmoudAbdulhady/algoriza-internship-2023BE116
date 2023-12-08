@@ -1,4 +1,5 @@
 ﻿
+using Application.Contracts;
 using Application.Services;
 using Domain.DTOS;
 using Domain.Enums;
@@ -9,11 +10,11 @@ namespace Veezta.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class DoctorController : Controller
+    public class DoctorController : ControllerBase
     {
-        private readonly DoctorService _doctorService;
+        private readonly IDoctorService _doctorService;
 
-        public DoctorController(DoctorService doctorService)
+        public DoctorController(IDoctorService doctorService)
         {
             _doctorService = doctorService;
         }
@@ -86,6 +87,8 @@ namespace Veezta.Controllers
              return Ok("Booking status updated successfully");
 
         }
+
+
     }
 }
 

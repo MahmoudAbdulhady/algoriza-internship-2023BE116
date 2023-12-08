@@ -20,5 +20,6 @@ namespace Domain.Interfaces
         Task<Time> DoctorAppointmentUpdateAsync(Time TimeEntity);
         Task<bool>ConfirmCheckup(int bookingId);
         Task<Booking> FindBookingByTimeId(int timeId);
+
     }
 }

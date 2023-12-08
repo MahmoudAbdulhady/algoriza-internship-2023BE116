@@ -1,4 +1,6 @@
 ﻿
+using Application.Contracts;
+using Application.DTOS;
 using Application.Services;
 using Domain.DTOS;
 using Microsoft.AspNetCore.Http;
@@ -10,14 +12,14 @@ namespace Veezta.Controllers
     [ApiController]
     public class PatientController : Controller
     {
-        private readonly PatientService _patientService;
-        public PatientController(PatientService patientService)
+        private readonly IPatientService _patientService;
+        public PatientController(IPatientService patientService)
         {
             _patientService = patientService;
         }
 
         [HttpPost("Register")]
-        public async Task<IActionResult> PatientRegister([FromBody] PatientRegisterDTO model)
+        public async Task<IActionResult> PatientRegister([FromForm] PatientRegisterDTO model)
         {
             if(ModelState.IsValid)
             {
@@ -56,10 +58,10 @@ namespace Veezta.Controllers
         }
 
         [HttpPost("CreateNewBooking")]
-        public async Task<IActionResult>BookAppointment(int timeId , string PatientId)
+        public async Task<IActionResult> BookAppointment([FromForm] CreateBookingDTO bookingModel)
         {
-            await _patientService.CreateNewBooking(timeId , PatientId);
-            return Ok($"Appointment Time With ID: {timeId} is sucessuffly Booked!");
+            await _patientService.CreateNewBooking(bookingModel.TimeId , bookingModel.PatientId , bookingModel.CouponName);
+            return Ok($"Appointment Time With ID: {bookingModel.TimeId} is sucessuffly Booked!");
         }
 
         [HttpPost("cancelAppointment")]

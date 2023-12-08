@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Domain.Enums
 {
-    public enum Discount
+    public enum DiscountCode
     {
         Fifty = 50,
         OneHundred = 100

@@ -11,26 +11,58 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using Microsoft.AspNetCore.Hosting;
+using Application.Contracts;
 namespace Application.Services
 {
-    public class AdminServices
+    public class AdminServices : IAdminService
     {
         private readonly IAdminRepository _adminRepository;
         private readonly UserManager<CustomUser> _userManager;
         private readonly ISpecializationRepository _specilizationRepository;
+        private readonly IEmailSender _emailSender;
 
 
 
-        public AdminServices(IAdminRepository adminRepository, UserManager<CustomUser> userManager, ISpecializationRepository specilizationRepository)
+        public AdminServices(IAdminRepository adminRepository, UserManager<CustomUser> userManager, ISpecializationRepository specilizationRepository , IEmailSender emailSender)
         {
             _adminRepository = adminRepository;
             _userManager = userManager;
             _specilizationRepository = specilizationRepository;
+            _emailSender = emailSender;
         }
 
+        /// <summary>
+        /// Registers a new doctor asynchronously. The registration process includes uploading an image, creating a new user account, 
+        /// adding the user to a specific role, and creating a doctor entity with a specialization. 
+        /// </summary>
+        /// <param name="model">The data transfer object containing all the necessary information for registering a doctor, 
+        /// including personal details, email, password, and an image file.</param>
+        /// <returns>
+        /// A boolean value indicating the success of the doctor registration process. 
+        /// Returns true if the registration is successful, otherwise false.
+        /// </returns>
+        /// <exception cref="Exception">
+        /// Throws an exception if no image is uploaded, if user creation fails with a list of errors, 
+        /// or if other exceptions occur during the process.
+        /// </exception>
         public async Task<bool> AddDocotorAsync(DoctorRegisterDTO model)
         {
+
+            if (model.ImageUrl == null || model.ImageUrl.Length == 0)
+            {
+                throw new Exception("No Image were Uploaded");
+            }
+
+            // Generate a unique file name to prevent overwriting existing files
+            var fileName = Guid.NewGuid().ToString() + Path.GetExtension(model.ImageUrl.FileName);
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", fileName);
+
+            // Save the image to the 'wwwroot/images' folder
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await model.ImageUrl.CopyToAsync(stream);
+            }
 
             var user = new CustomUser
             {
@@ -42,12 +74,15 @@ namespace Application.Services
                 PhoneNumber = model.PhoneNumber,
                 DateOfBirth = DateTime.Parse(model.DateOfBirth),
                 Gender = model.Gender,
+                ImageUrl= fileName,
                 AccountRole = AccountRole.Doctor
+                
             };
             var userResult = await _userManager.CreateAsync(user, model.Password);
             if (!userResult.Succeeded)
             {
-                throw new Exception(userResult.Errors.ToString());
+                var errors = userResult.Errors.Select(e => e.Description);
+                throw new Exception($"User creation failed: {string.Join(", ", errors)}");
             }
             await _userManager.AddToRoleAsync(user, AccountRole.Doctor.ToString());
 
@@ -61,16 +96,27 @@ namespace Application.Services
             }
 
 
+           
+
             var doctor = new Doctor
             {
                 UserId = user.Id,
-                SpecializationId = specialization.SpecializationId
+                SpecializationId = specialization.SpecializationId,
+                CreatedDate = DateTime.UtcNow
             };
 
             await _adminRepository.CreateNewDoctorAsync(doctor);
             return true;
         }
 
+        /// <summary>
+        /// Asynchronously retrieves the details of a specific doctor by their ID. The information is formatted into a DoctorDTO object.
+        /// </summary>
+        /// <param name="doctorId">The unique identifier of the doctor whose details are to be retrieved.</param>
+        /// <returns>
+        /// A <see cref="DoctorDTO"/> object containing the details of the specified doctor, such as email, full name, phone number, 
+        /// specialization, gender, date of birth, and image URL. Returns null if no doctor with the specified ID is found.
+        /// </returns>
         public async Task<DoctorDTO> GetDoctorByIdAsync(int doctorId)
         {
             var doctor = await _adminRepository.GetDoctorByIdAsync(doctorId);
@@ -91,6 +137,18 @@ namespace Application.Services
             };
         }
 
+
+        /// <summary>
+        /// Asynchronously deletes a doctor and their associated user account from the system based on the doctor's ID.
+        /// </summary>
+        /// <param name="doctorId">The unique identifier of the doctor to be deleted.</param>
+        /// <returns>
+        /// A boolean value indicating the success of the deletion process. 
+        /// Returns true if both the doctor and their associated user account are successfully deleted, otherwise false.
+        /// </returns>
+        /// <exception cref="Exception">
+        /// Throws an exception if no doctor with the specified ID is found in the database.
+        /// </exception>
         public async Task<bool> DeleteDoctorAsync(int doctorId)
         {
             var doctor = await _adminRepository.GetDoctorByIdAsync(doctorId);
@@ -98,6 +156,7 @@ namespace Application.Services
             {
                 throw new Exception($"No Doctor with This ID: {doctorId} was found, Check DoctorDB again");
             }
+
             await _adminRepository.DeleteDoctorAsync(doctor);
 
             var user = await _userManager.FindByIdAsync(doctor.UserId);
@@ -113,11 +172,30 @@ namespace Application.Services
 
         }
 
+        /// <summary>
+        /// Retrieves the total number of doctors currently registered in the system.
+        /// </summary>
+        /// <returns>
+        /// An integer representing the total number of doctors.
+        /// </returns>
         public int GetTotalNumOfDoctors()
         {
             return _adminRepository.NumOfDoctors();
         }
 
+        /// <summary>
+        /// Asynchronously updates the details of an existing doctor based on the provided doctor ID and update information. 
+        /// The update process modifies both the user's identity information and the doctor's specialization.
+        /// </summary>
+        /// <param name="doctorId">The unique identifier of the doctor to be updated.</param>
+        /// <param name="model">The data transfer object containing the updated information for the doctor, 
+        /// such as email, date of birth, image URL, phone number, gender, name, and specialization.</param>
+        /// <returns>
+        /// A boolean value indicating the success of the update process. Returns true if the update is successful, otherwise false.
+        /// </returns>
+        /// <exception cref="Exception">
+        /// Throws an exception if no doctor with the specified ID is found in the database.
+        /// </exception>
         public async Task<bool> DoctorUpdateAsync(int doctorId, DoctorUpdateDTO model)
         {
             var doctor = await _adminRepository.GetDoctorByIdAsync(doctorId);
@@ -156,6 +234,16 @@ namespace Application.Services
             return await _adminRepository.DoctorUpdateAsync(doctor);
         }
 
+        /// <summary>
+        /// Asynchronously retrieves a paginated list of doctors and their total count. This function allows for optional 
+        /// search criteria to filter the doctors based on the provided parameters in the request.
+        /// </summary>
+        /// <param name="request">The data transfer object containing pagination settings and optional search criteria.</param>
+        /// <returns>
+        /// A tuple where the first element is an IEnumerable of <see cref="DoctorDTO"/> representing the list of doctors, 
+        /// and the second element is an integer representing the total count of doctors. Each <see cref="DoctorDTO"/> includes 
+        /// details like full name, email, date of birth, gender, phone number, image URL, and specialization of the doctor.
+        /// </returns>
         public async Task<(IEnumerable<DoctorDTO>, int TotalCount)> GetAllDoctorsAsync(PaginationAndSearchDTO request)
         {
             var (doctors, totalCount) = await _adminRepository.GetAllDoctorsAsync(request);
@@ -174,13 +262,28 @@ namespace Application.Services
             return (doctorDtos, totalCount);
         }
 
+        /// <summary>
+        /// Asynchronously retrieves the total number of patients registered in the system.
+        /// </summary>
+        /// <returns>
+        /// An integer representing the total number of patients.
+        /// </returns>
         public async Task<int> TotalNumberOfPatients()
         {
             return await _adminRepository.NumberOfPatients();
-
-
         }
 
+        /// <summary>
+        /// Asynchronously retrieves a paginated list of patients along with the total count. This function supports pagination 
+        /// and optional search criteria based on the provided parameters in the request.
+        /// </summary>
+        /// <param name="request">The data transfer object containing pagination settings and optional search criteria.</param>
+        /// <returns>
+        /// A tuple where the first element is an IEnumerable of <see cref="CustomUser"/> representing the list of patients, 
+        /// and the second element is an integer representing the total count of patients. The patient data is transformed into 
+        /// <see cref="PatientDTO"/> objects, including details such as email, full name, gender, date of birth, phone number, 
+        /// and image URL.
+        /// </returns>
         public async Task<(IEnumerable<CustomUser>, int)> GetAllPatientsAsync(PaginationAndSearchDTO request)
         {
             var (patients, totalcount) = await _adminRepository.GetAllPatientsAsync(request);
@@ -199,6 +302,16 @@ namespace Application.Services
             return (patients, totalcount);
         }
 
+
+        /// <summary>
+        /// Asynchronously retrieves the details of a specific patient by their unique identifier. 
+        /// The patient's information is formatted into a PatientDTO object.
+        /// </summary>
+        /// <param name="patientId">The unique identifier of the patient whose details are to be retrieved.</param>
+        /// <returns>
+        /// A <see cref="PatientDTO"/> object containing the details of the specified patient, such as full name, email, 
+        /// phone number, gender, date of birth, and image URL. Returns null if no patient with the specified ID is found.
+        /// </returns>
         public async Task<PatientDTO> GetPatientByIdAsync(string patientId)
         {
             var patient = await _adminRepository.GetPatientById(patientId);
@@ -218,6 +331,16 @@ namespace Application.Services
             };
         }
 
+        /// <summary>
+        /// Asynchronously retrieves the top five specializations based on the number of completed bookings. 
+        /// This function groups the bookings by specialization and calculates the total count for each, 
+        /// returning the five specializations with the highest counts.
+        /// </summary>
+        /// <returns>
+        /// An IEnumerable of <see cref="TopFiveSpecalizationDTO"/> objects, each representing a specialization. 
+        /// Each object includes the specialization name and the count of requests or bookings associated with it, 
+        /// sorted in descending order by the request count.
+        /// </returns>
         public async Task<IEnumerable<TopFiveSpecalizationDTO>> GetTopSpecializationsAsync()
         {
             var completeBookings = await _adminRepository.GetTopFiveSpecalizationsAsync();
@@ -236,6 +359,16 @@ namespace Application.Services
             return topFiveSpecalizations;
         }
 
+        /// <summary>
+        /// Asynchronously retrieves the top ten doctors based on the number of completed requests or bookings. 
+        /// This function groups the bookings by doctor and calculates the total count for each, 
+        /// returning the ten doctors with the highest counts.
+        /// </summary>
+        /// <returns>
+        /// An IEnumerable of <see cref="TopTenDoctorDTO"/> objects, each representing a doctor. 
+        /// Each object includes the doctor's full name, specialization, image URL, and the count of requests or bookings associated with them, 
+        /// sorted in descending order by the request count.
+        /// </returns>
         public async Task<IEnumerable<TopTenDoctorDTO>> GetTopTenDoctors()
         {
             var completedRequests = await _adminRepository.GetTopTenDoctors();
@@ -256,9 +389,52 @@ namespace Application.Services
             return TopTenDoctors;
         }
 
+        /// <summary>
+        /// Asynchronously retrieves the total number of requests or bookings made in the system. 
+        /// The information is encapsulated in a RequestsDTO object.
+        /// </summary>
+        /// <returns>
+        /// A <see cref="RequestsDTO"/> object containing the total number of requests. 
+        /// This may include various statistics or counts related to the requests.
+        /// </returns>
         public async Task<RequestsDTO>GetNumberOfRequestsAsync()
         {
             return await _adminRepository.GetNumberOfRequests();
         }
+
+        /// <summary>
+        /// Asynchronously retrieves the number of doctors who have been added to the system in the last 24 hours.
+        /// </summary>
+        /// <returns>
+        /// An integer representing the count of doctors added in the last 24 hours.
+        /// </returns>
+        public async Task<int> GetNumberOfDoctorsAddedLast24HoursAsync()
+        {
+            return await _adminRepository.GetNumberOfDoctorsAddedLast24HoursAsync();
+        }
+
+        /// <summary>
+        /// Asynchronously sends an email to a specific doctor identified by their ID. 
+        /// The email includes a temporary password and instructions for the doctor to change their password upon first login.
+        /// </summary>
+        /// <param name="doctorId">The unique identifier of the doctor to whom the email is to be sent.</param>
+        /// <remarks>
+        /// This function generates a password reset token, resets the doctor's password to a temporary one, and sends an email 
+        /// with the temporary password and instructions for changing it.
+        /// </remarks>
+        public async Task SendEmailToDoctorAsync(string doctorId)
+        {
+            var doctor = await _userManager.FindByIdAsync(doctorId);
+            if (doctor != null)
+            {
+                var token = await _userManager.GeneratePasswordResetTokenAsync(doctor);
+                await _userManager.ResetPasswordAsync(doctor, token, "Test@2023");
+                var emailSubject = "DoctorEmailAndPassword";
+                var emailMessage = $"Your account has been created. Your temporary password is: Test@2023. Please change your password upon first login.";
+
+                await _emailSender.SendEmailAsync(doctor.Email, emailSubject, emailMessage);
+            }
+        }
+
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Domain.Enums;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -29,15 +30,16 @@ namespace Domain.DTOS
         public string LastName { get; set; }
 
         [Phone]
-        [Required(ErrorMessage = "PhoneNumber Is Required")]
+        [Required]
+        [RegularExpression(@"^\d{11}$", ErrorMessage = "The phone number must be exactly 10 digits.")]
         public string PhoneNumber { get; set; }
 
 
         [Required(ErrorMessage = "DateOfBirth Is Required")]
         public string DateOfBirth { get; set; }
 
-
-        public string ImageUrl { get; set; }
+  
+        public IFormFile? ImageUrl { get; set; }
 
 
         [Required(ErrorMessage = "Gender Is Required")]

@@ -40,7 +40,7 @@ namespace Infrastrucutre.Migrations
 
                     b.HasIndex("DoctorId");
 
-                    b.ToTable("Appointments", (string)null);
+                    b.ToTable("Appointments");
                 });
 
             modelBuilder.Entity("Domain.Entities.Booking", b =>
@@ -54,9 +54,18 @@ namespace Infrastrucutre.Migrations
                     b.Property<int>("AppointmentId")
                         .HasColumnType("int");
 
+                    b.Property<bool>("IsCouponUsed")
+                        .HasColumnType("bit");
+
                     b.Property<string>("PatientId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("Price")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PriceAfterCoupon")
+                        .HasColumnType("int");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
@@ -72,7 +81,35 @@ namespace Infrastrucutre.Migrations
 
                     b.HasIndex("TimeId");
 
-                    b.ToTable("Bookings", (string)null);
+                    b.ToTable("Bookings");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Coupon", b =>
+                {
+                    b.Property<int>("CouponId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CouponId"), 1L, 1);
+
+                    b.Property<int>("Code")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CouponName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("PatientId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("CouponId");
+
+                    b.HasIndex("PatientId");
+
+                    b.ToTable("Coupons");
                 });
 
             modelBuilder.Entity("Domain.Entities.CustomUser", b =>
@@ -162,6 +199,27 @@ namespace Infrastrucutre.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = "2192e432-3c0b-48e3-8ade-87ff2404e220",
+                            AccessFailedCount = 0,
+                            AccountRole = 0,
+                            ConcurrencyStamp = "d9e0b924-d545-4e43-a2bd-af2a6ef5c4d6",
+                            DateOfBirth = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified).AddTicks(9),
+                            Email = "VeeztaAdmin@gmail.com",
+                            EmailConfirmed = false,
+                            FirstName = "Veezta",
+                            FullName = "VezetaAdmin",
+                            Gender = 1,
+                            ImageUrl = "Admin",
+                            LastName = "Admin",
+                            LockoutEnabled = false,
+                            PhoneNumberConfirmed = false,
+                            SecurityStamp = "b8dd4de6-4eb7-460a-b69b-f49db0589a85",
+                            TwoFactorEnabled = false
+                        });
                 });
 
             modelBuilder.Entity("Domain.Entities.Doctor", b =>
@@ -171,6 +229,9 @@ namespace Infrastrucutre.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DoctorId"), 1L, 1);
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<int?>("Price")
                         .HasColumnType("int");
@@ -189,7 +250,7 @@ namespace Infrastrucutre.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Doctors", (string)null);
+                    b.ToTable("Doctors");
                 });
 
             modelBuilder.Entity("Domain.Entities.Specialization", b =>
@@ -206,7 +267,7 @@ namespace Infrastrucutre.Migrations
 
                     b.HasKey("SpecializationId");
 
-                    b.ToTable("Specializations", (string)null);
+                    b.ToTable("Specializations");
 
                     b.HasData(
                         new
@@ -258,6 +319,31 @@ namespace Infrastrucutre.Migrations
                         {
                             SpecializationId = 10,
                             SpecializationName = "Radiologists"
+                        },
+                        new
+                        {
+                            SpecializationId = 11,
+                            SpecializationName = "Urology"
+                        },
+                        new
+                        {
+                            SpecializationId = 12,
+                            SpecializationName = "Ophthalmology"
+                        },
+                        new
+                        {
+                            SpecializationId = 13,
+                            SpecializationName = "Surgery"
+                        },
+                        new
+                        {
+                            SpecializationId = 14,
+                            SpecializationName = "Endocrinologist"
+                        },
+                        new
+                        {
+                            SpecializationId = 15,
+                            SpecializationName = "Gastroenterology"
                         });
                 });
 
@@ -282,7 +368,7 @@ namespace Infrastrucutre.Migrations
 
                     b.HasIndex("AppointmentId");
 
-                    b.ToTable("Times", (string)null);
+                    b.ToTable("Times");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -456,6 +542,15 @@ namespace Infrastrucutre.Migrations
                     b.Navigation("Time");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Coupon", b =>
+                {
+                    b.HasOne("Domain.Entities.CustomUser", "Patient")
+                        .WithMany("Coupons")
+                        .HasForeignKey("PatientId");
+
+                    b.Navigation("Patient");
+                });
+
             modelBuilder.Entity("Domain.Entities.Doctor", b =>
                 {
                     b.HasOne("Domain.Entities.Specialization", "Specialization")
@@ -542,6 +637,11 @@ namespace Infrastrucutre.Migrations
                     b.Navigation("Bookings");
 
                     b.Navigation("Times");
+                });
+
+            modelBuilder.Entity("Domain.Entities.CustomUser", b =>
+                {
+                    b.Navigation("Coupons");
                 });
 
             modelBuilder.Entity("Domain.Entities.Doctor", b =>

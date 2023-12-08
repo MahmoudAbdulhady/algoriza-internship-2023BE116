@@ -10,34 +10,38 @@ namespace Domain.DTOS
 {
     public class DoctorUpdateDTO 
     {
-        [Required(ErrorMessage = "Email Address is required")]
+        [Required]
         [EmailAddress]
         public string Email { get; set; }
 
-        [Required(ErrorMessage = "First Name Address is required")]
-        [MaxLength(100)]
+        [Required]
+        [MaxLength(100, ErrorMessage = "You Should not Exceed 100 Characters")]
+
         public string FirstName { get; set; }
 
-        [Required(ErrorMessage = "Last Name is required")]
-        [MaxLength(100)]
+        [Required]
+        [MaxLength(100, ErrorMessage = "You Should not Exceed 100 Characters")]
+
         public string LastName { get; set; }
 
-        [Required(ErrorMessage = "Specailization is required")]
-        [MaxLength(100)]
+        [Required]
+        [MaxLength(100, ErrorMessage = "You Should not Exceed 100 Characters")]
+
         public string Specilization { get; set; }
 
         [Phone]
-        [Required(ErrorMessage = "Phone Number is required")]
+        [Required]
+        [RegularExpression(@"^\d{11}$", ErrorMessage = "The phone number must be exactly 10 digits.")]
         public string PhoneNumber { get; set; }
 
 
-        [Required(ErrorMessage = "DateOfBirth is required")]
+        [Required]
         public string DateOfBirth { get; set; }
 
-        [Required(ErrorMessage ="Image Is required")]
+        [Required]
         public string ImageUrl { get; set; }
 
-        [Required(ErrorMessage ="Gender is required")]
+        [Required]
         public Gender Gender { get; set; }
     }
 }

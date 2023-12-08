@@ -13,6 +13,7 @@ namespace Domain.Entities
     {
         [Key]
         public int AppointmentId { get; set; } // Primary Key
+        [Required]
         public DaysOfTheWeek DaysOfTheWeek { get; set; }
 
 

@@ -1,6 +1,7 @@
 ﻿using Domain.DTOS;
 using Domain.Entities;
 using Domain.Enums;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
@@ -29,6 +30,7 @@ namespace Domain.Interfaces
         Task<List<Booking>> GetTopFiveSpecalizationsAsync();
         Task<List<Booking>> GetTopTenDoctors();
         Task<RequestsDTO> GetNumberOfRequests();
+        Task<int> GetNumberOfDoctorsAddedLast24HoursAsync();
 
     }
 }

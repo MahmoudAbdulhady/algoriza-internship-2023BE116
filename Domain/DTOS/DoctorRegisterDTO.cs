@@ -1,5 +1,6 @@
 ﻿using Domain.Entities;
 using Domain.Enums;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -11,37 +12,38 @@ namespace Domain.DTOS
 {
     public class DoctorRegisterDTO
     {
-        [Required(ErrorMessage = "Email is Required")]
+        [Required]
         [EmailAddress]
-        [MaxLength(100)]
+        [MaxLength(100 , ErrorMessage ="You Should not Exceed 100 Characters")]
         public string Email { get; set; }
 
-        [Required(ErrorMessage = "Password is Required")]
+        [Required]
         [DataType(DataType.Password)]
-        public string Password { get; set; }
 
-        [Required(ErrorMessage = "FirstName is Required")]
-        [MaxLength(100)]
+        public string Password { get; set; }
+        [Required]
+        [MaxLength(100, ErrorMessage = "You Should not Exceed 100 Characters")]
         public string FirstName { get; set; }
 
-        [Required(ErrorMessage = "LastName is Required")]
-        [MaxLength(100)]
+        [Required]
+        [MaxLength(100, ErrorMessage = "You Should not Exceed 100 Characters")]
         public string LastName { get; set; }
 
-        [Required(ErrorMessage = "Specialization is Required")]
-        [MaxLength(100)]
+        [Required]
+        [MaxLength(100, ErrorMessage = "You Should not Exceed 100 Characters")]
         public string Specialization { get; set; }
 
         [Phone]
-        [Required(ErrorMessage = "PhoneNumber is Required")]
+        [Required]
+        [RegularExpression(@"^\d{11}$", ErrorMessage = "The phone number must be exactly 10 digits.")]
         public string PhoneNumber { get; set; }
 
-        [Required(ErrorMessage = "DateOfBirth is Required")]
+        [Required]
         public  string DateOfBirth { get; set; }
        
 
         [Required]
-        public string ImageUrl { get; set; }
+        public IFormFile ImageUrl { get; set; }
 
         [Required]
         public Gender Gender { get; set; }
