@@ -46,15 +46,11 @@ namespace Veezta.Controllers
             return Unauthorized("Invalid Email or Password , Please Try Again !");
         }
 
-        [HttpGet("GetDoctorAppointments")]
-        public async Task<IActionResult> GetDoctorAppointments()
+        [HttpPost("GetDoctorAppointments")]
+        public async Task<IActionResult> GetDoctorAppointments(PaginationAndSearchDTO request)
         {
-            var appointments = await _patientService.GetAppointmentsForDoctorAsync();
-            if (!appointments.Any())
-            {
-                return NotFound("No Appointments To Show Doctors didn't Provide any Appointments !");
-            }
-            return Ok(appointments);
+            var (appointments, totalCounts)= await _patientService.GetAppointmentsForDoctorAsync(request);
+            return Ok(new { appointments, totalCounts });
         }
 
         [HttpPost("CreateNewBooking")]

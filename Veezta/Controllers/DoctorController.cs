@@ -31,14 +31,14 @@ namespace Veezta.Controllers
             return Unauthorized("Login Failed");
         }
 
-        [HttpGet("GetSpecificDoctorAppointment")]
+        [HttpPost("GetSpecificDoctorAppointment")]
         public async Task<IActionResult> GetSpecificDoctorAppointment(int doctorId , [FromBody]PaginationAndSearchDTO request)
         {
             var (appointments,totalcounts) = await _doctorService.GetAppointmentsForDoctorAsync(doctorId , request);
             return Ok(new { appointments, totalcounts });
         }
 
-        [HttpGet("{doctorId}/appointments")]
+        [HttpGet("AddDoctorAppointment")]
         public async Task<IActionResult> AddDoctorAppointment([FromBody]AddAppointmentDTO model)
         {
             var appointment = await _doctorService.AddDoctorAppointmentAsync(model);
@@ -57,19 +57,19 @@ namespace Veezta.Controllers
         }
 
         [HttpPut("DoctorUpdateAppointment")]
-        public async Task<IActionResult>DoctorUpdateAppointment (int timeId , UpdateAppointmentDTO model)
+        public async Task<IActionResult>DoctorUpdateAppointment (int  appointmentId, UpdateAppointmentDTO model)
         {
             if(!ModelState.IsValid)
             {
                 return BadRequest("Invalid Input , Please Try Again!");
             }
 
-            var result = await _doctorService.DoctorUpdateAppointmentAsync(timeId, model);  
+            var result = await _doctorService.DoctorUpdateAppointmentAsync(appointmentId, model);  
             if(!result)
             {
-                return BadRequest($"The id you entered : {timeId} is not found");
+                return BadRequest($"The id you entered : {appointmentId} is not found");
             }
-            return Ok($"Appointment Updated Sucessfully!\n {model}");
+            return Ok($"Appointment Updated Sucessfully!");
         }
 
         [HttpPost("ConfirmCheckup")]

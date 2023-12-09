@@ -42,34 +42,87 @@ namespace Infrastrucutre.Repositories
             return appointement;
         }
 
-        public async Task<(IEnumerable<Booking>, int)> GetDoctorApptAsync(PaginationAndSearchDTO request)
+        public async Task<(IEnumerable<Appointement>, int)> GetDoctorApptAsync(PaginationAndSearchDTO request , int doctorId)
         {
-            // Start with a queryable that can be modified based on conditions
-            var query = _veeztaDbContext.Bookings
-                .Include(u => u.Patient)
-                .Include(a => a.Appointement)
-                    .ThenInclude(a => a.Times)
+
+            var query = _veeztaDbContext.Appointments
+                .Include(b=> b.Booking) // Booking Identity 
+                .Include(d=> d.Doctor) // Doctor Table
+                .Include(u=> u.Booking.Patient) // Identity Table
+                .Include(t=> t.Times) // Times Table
+                .Where(a=> a.DoctorId == doctorId)
                 .AsQueryable();
 
-            // Apply search term if present
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
             {
-                // Adjust this condition based on your search requirements
-                query = query.Where(b =>
-                    b.Appointement.Times.Any(t => t.StartTime.ToString().Contains(request.SearchTerm) ||
-                                                  t.EndTime.ToString().Contains(request.SearchTerm)));
+                var searchTerm = request.SearchTerm;
+
+                query = query.Where(u =>
+                    u.Doctor.User.FullName.Contains(searchTerm) ||
+                    u.Times.Any(t => EF.Functions.Like(t.StartTime, $"%{searchTerm}%")) ||
+                    u.Times.Any(t => EF.Functions.Like(t.EndTime, $"%{searchTerm}%")));
+                    
             }
+     
+            int totalRecords = await query.CountAsync();
+            var bookings = await query.Skip((request.PageNumber - 1) * request.PageSize)
+                                      .Take(request.PageSize)
+                                      .ToListAsync();
 
-            // Count total items matching the criteria
-            var totalCount = await query.CountAsync();
+            return (bookings, totalRecords);
 
-            // Apply pagination
-            var paginatedBookings = await query
-                .Skip((request.PageNumber - 1) * request.PageSize)
-                .Take(request.PageSize)
-                .ToListAsync();
 
-            return (paginatedBookings, totalCount);
+
+
+
+
+
+
+            //var query = _veeztaDbContext.Appointments
+            //  .Include(u => u.Doctor.User) // Identity 
+            //  .Include(t => t.Times) // Times
+            //  .Include(b=> b.Booking) // Booking Table 
+            //  .AsQueryable();
+
+
+            //if (!string.IsNullOrWhiteSpace(request.SearchTerm))
+            //{
+            //    var searchTerm = request.SearchTerm.ToLower();
+
+            //    query = query.Where(u =>
+            //        u.Doctor.User.FullName.ToLower().Contains(searchTerm) ||
+            //        u.Times.Any(t => t.StartTime.ToLower().Contains(searchTerm)) ||
+            //        u.Times.Any(t => t.EndTime.ToLower().Contains(searchTerm)));
+            //}
+
+            //int totalPages = await query.CountAsync();
+            //var doctorBookings = await query.Skip((request.PageNumber - 1) * request.PageSize)
+            //                                .Take(request.PageSize)
+            //                                .ToListAsync();
+            //return (doctorBookings, totalPages);
+
+
+
+
+
+
+
+            //// Start with a queryable that can be modified based on conditions
+
+            //// Apply search term if present
+            //if (!string.IsNullOrWhiteSpace(request.SearchTerm))
+            //{
+            //    query = query.Where(
+            //        u => u.Doctor.User.FullName.ToLower().Contains(request.SearchTerm) ||
+            //        u.Times.Any(u => u.StartTime.Contains(request.SearchTerm)) ||
+            //        u.Times.Any(u => u.EndTime.Contains(request.SearchTerm)) ||
+            //        u.Days.(request.SearchTerm));
+            //}
+
+            //int totalPages = await query.CountAsync();
+            //var doctorbookings = await query.Skip((request.PageNumber - 1) * request.PageSize).Take(request.PageSize)
+            //                            .ToListAsync();
+            //return (doctorbookings, totalPages);
         }
 
         public async Task UpdateDoctorPrice(int doctorId, int newPrice)

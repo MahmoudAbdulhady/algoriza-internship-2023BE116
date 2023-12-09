@@ -1,4 +1,5 @@
 ﻿using Domain.Enums;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -8,8 +9,13 @@ using System.Threading.Tasks;
 
 namespace Domain.DTOS
 {
-    public class DoctorUpdateDTO 
+    public class DoctorUpdateDTO
     {
+        [Required]
+        public int doctorId { get; set; }
+
+
+
         [Required]
         [EmailAddress]
         public string Email { get; set; }
@@ -39,7 +45,7 @@ namespace Domain.DTOS
         public string DateOfBirth { get; set; }
 
         [Required]
-        public string ImageUrl { get; set; }
+        public IFormFile ImageUrl { get; set; }
 
         [Required]
         public Gender Gender { get; set; }

@@ -147,25 +147,31 @@ namespace Application.Services
 
 
         /// <summary>
-        /// Asynchronously deletes a doctor and their associated user account from the system based on the doctor's ID.
+        /// Deletes a doctor and their associated appointments based on the given doctor ID. 
         /// </summary>
-        /// <param name="doctorId">The unique identifier of the doctor to be deleted.</param>
-        /// <returns>
-        /// A boolean value indicating the success of the deletion process. 
-        /// Returns true if both the doctor and their associated user account are successfully deleted, otherwise false.
-        /// </returns>
-        /// <exception cref="Exception">
-        /// Throws an exception if no doctor with the specified ID is found in the database.
-        /// </exception>
+        /// <param name="doctorId">The ID of the doctor to be deleted.</param>
+        /// <returns>Returns true if the doctor is successfully deleted.</returns>
+        /// <exception cref="System.Exception">Thrown if the doctor has existing bookings and therefore cannot be deleted.</exception>
+        /// <remarks>
+        /// The method first checks for any existing bookings for the specified doctor. 
+        /// If there are existing bookings, an exception is thrown indicating that the doctor cannot be deleted.
+        /// If there are no bookings, the doctor's appointments are deleted followed by the deletion of the doctor record.
+        /// Additionally, the associated user record for the doctor is also deleted from the user management system.
+        /// </remarks>
         public async Task<bool> DeleteDoctorAsync(int doctorId)
         {
             var doctor = await _adminRepository.GetDoctorByIdAsync(doctorId);
+            if(doctor == null)
+            {
+                throw new Exception($"No Doctor Id: {doctorId} was found ");
+            }
             var doctorbookings= await _adminRepository.GetBookingByDoctorId(doctorId);
             var doctorAppointment = await _adminRepository.GetAppointmentByDoctorId(doctorId);
             if(doctorbookings)
             {
                 throw new Exception("This Doctor Can't Be Deleted , Because he as Appointments");
             }
+
             else
             {
                 await _adminRepository.DeleteDoctorAppointmentAsync(doctorAppointment);
@@ -176,9 +182,6 @@ namespace Application.Services
             }
             return true;
         }
-
-
-
 
         /// <summary>
         /// Retrieves the total number of doctors currently registered in the system.
@@ -204,13 +207,32 @@ namespace Application.Services
         /// <exception cref="Exception">
         /// Throws an exception if no doctor with the specified ID is found in the database.
         /// </exception>
-        public async Task<bool> DoctorUpdateAsync(int doctorId, DoctorUpdateDTO model)
+        public async Task<bool> DoctorUpdateAsync( DoctorUpdateDTO model)
         {
-            var doctor = await _adminRepository.GetDoctorByIdAsync(doctorId);
+            var doctor = await _adminRepository.GetDoctorByIdAsync(model.doctorId);
             if (doctor == null)
             {
-                throw new Exception($"No Doctor with This ID: {doctorId} was found, Check DoctorDB again");
+                throw new Exception($"No Doctor with This ID: {model.doctorId} was found, Check DoctorDB again");
             }
+
+            if (model.ImageUrl == null || model.ImageUrl.Length == 0)
+            {
+                throw new Exception("No Image were Uploaded");
+            }
+
+            // Generate a unique file name to prevent overwriting existing files
+            var fileName = Guid.NewGuid().ToString() + Path.GetExtension(model.ImageUrl.FileName);
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", fileName);
+
+            // Save the image to the 'wwwroot/images' folder
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await model.ImageUrl.CopyToAsync(stream);
+            }
+
+            var imageUrl = $"images/{fileName}";
+
+
 
             //Updating Identity Table
             var user = await _userManager.FindByIdAsync(doctor.UserId);
@@ -219,7 +241,7 @@ namespace Application.Services
                 user.Email = model.Email;
                 user.UserName = model.Email;
                 user.DateOfBirth = Convert.ToDateTime(model.DateOfBirth);
-                user.ImageUrl = model.ImageUrl;
+                user.ImageUrl = imageUrl;
                 user.PhoneNumber = model.PhoneNumber;
                 user.Gender = model.Gender;
                 user.FirstName = model.FirstName;
@@ -323,9 +345,9 @@ namespace Application.Services
         public async Task<PatientDTO> GetPatientByIdAsync(string patientId)
         {
             var patient = await _adminRepository.GetPatientById(patientId);
-            if (patient == null)
+            if (patient == null || patient.AccountRole != AccountRole.Patient)
             {
-                return null;
+                throw new Exception($"No Patients with This ID was Found");
             }
 
             return new PatientDTO

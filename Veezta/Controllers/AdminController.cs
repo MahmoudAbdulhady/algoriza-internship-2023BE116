@@ -63,19 +63,19 @@ namespace Veezta.Controllers
         }
 
         [HttpPut("UpdateDoctor")]
-        public async Task<IActionResult> UpdateDoctor(int doctorId, [FromBody] DoctorUpdateDTO model)
+        public async Task<IActionResult> UpdateDoctor([FromForm] DoctorUpdateDTO model)
         {
             if(!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-            var success = await _adminServices.DoctorUpdateAsync(doctorId, model);
+            var success = await _adminServices.DoctorUpdateAsync(model);
             if (!success)
             {
-                return NotFound($"Doctor with ID {doctorId} not found.");
+                return NotFound($"Doctor with ID {model.doctorId} not found.");
             }
 
-            return Ok($"Doctor with ID {doctorId} updated successfully.");
+            return Ok($"Doctor with ID {model.doctorId} updated successfully.");
         }
 
         [HttpPost("GetAllDoctors")]

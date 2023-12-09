@@ -62,43 +62,42 @@ namespace Application.Services
         /// Each object includes details such as the patient's name, age, phone number, appointment day, 
         /// start and end times, and the patient's image URL.
         /// </returns>
-        public async Task<(IEnumerable<DoctorBookingsDTO>, int)> GetAppointmentsForDoctorAsync(int doctorId , PaginationAndSearchDTO request)
+        public async Task<(IEnumerable<DoctorBookingsDTO>, int totalCounts)> GetAppointmentsForDoctorAsync(int doctorId , PaginationAndSearchDTO request)
         {
+            var (doctorBookings, totalCounts) = await _doctorRepository.GetDoctorApptAsync(request , doctorId);
 
-            var (bookings ,totalCount) = await _doctorRepository.GetDoctorApptAsync(request);
-
-            if (bookings == null )
+            if(doctorBookings == null || !doctorBookings.Any())
             {
-                throw new Exception("No Bookings Were Found");
+                throw new Exception("No Appointments found for this Doctor");
             }
 
-            var filteredBookings = bookings.Where(b => b.Appointement.DoctorId == doctorId);
+            var selectedBookings = doctorBookings.Select(group => new DoctorBookingsDTO
+            {
+                PatientName = group.Booking?.Patient.FullName ?? "Unknown",
+                Age = group.Booking?.Patient?.DateOfBirth.ToString() ?? "Unknown",
+                Day = group.Days.ToString(),
+                PhoneNumber = group.Booking?.Patient?.PhoneNumber ?? "Unknown",
+                StartTime = group.Times.FirstOrDefault()?.StartTime ?? "Unknown",
+                EndTime = group.Times.FirstOrDefault()?.EndTime ?? "Unknown",
+                Image = group.Booking?.Patient?.ImageUrl ?? "null" // Use a default or placeholder image if null
+            }).ToList();
 
 
-            var doctorSchedules = filteredBookings
-                .Select(group => new DoctorBookingsDTO
-                {
-                    PatientName = group.Appointement.Booking.Patient.FullName,
-                    Age = CalculateAge(group.Appointement.Booking.Patient.DateOfBirth).ToString(),
-                    PhoneNumber = group.Appointement.Booking.Patient.PhoneNumber,
-                    Day = group.Appointement.Days.ToString(),
-                    StartTime = group.Appointement.Times.FirstOrDefault()?.StartTime,
-                    EndTime = group.Appointement.Times.FirstOrDefault()?.EndTime,
-                    Image = group.Appointement.Booking.Patient.ImageUrl
-                }).ToList();
-
-            return (doctorSchedules , totalCount);
+            return (selectedBookings, totalCounts);
         }
 
 
         /// <summary>
-        /// Asynchronously adds a new doctor's appointment, including updating the doctor's price and creating appointment time slots.
+        /// Adds new appointments for a doctor based on the provided details. This includes updating the doctor's price and scheduling multiple appointments on different days and times.
         /// </summary>
-        /// <param name="doctorDTO">A <see cref="AddAppointmentDTO"/> object containing the details of the new appointment, 
-        /// including the doctor's ID, days of the week, price, start time, and end time.</param>
-        /// <returns>
-        /// A boolean value indicating whether the addition of the doctor's appointment was successful.
-        /// </returns>
+        /// <param name="doctorDTO">An object containing details for the doctor's appointments, including doctor ID, new price, and a list of day appointments.</param>
+        /// <returns>Returns true if the appointments are successfully added.</returns>
+        /// <remarks>
+        /// This method first updates the doctor's price using the provided doctor ID and price. 
+        /// It then iterates over each day's appointments specified in the doctorDTO. 
+        /// For each day, it creates a new Appointment object and adds multiple time slots for that appointment. 
+        /// Each time slot, defined by a start and end time, is added to the doctor's schedule.
+        /// </remarks>
         public async Task<bool>AddDoctorAppointmentAsync(AddAppointmentDTO doctorDTO)
         {
 
@@ -132,23 +131,23 @@ namespace Application.Services
                         };
                        
                         await _doctorRepository.UpdateTimeAppointment(time);
-                    
-                   
                 }
             }
             return true;
         }
 
         /// <summary>
-        /// Asynchronously deletes a time appointment slot if it is not already booked and canceled.
+        /// Deletes a time appointment based on the given appointment ID. 
         /// </summary>
-        /// <param name="timeId">The unique ID of the time appointment slot to be deleted.</param>
-        /// <returns>
-        /// A boolean value indicating whether the deletion of the time appointment slot was successful.
-        /// </returns>
-        /// <exception cref="Exception">
-        /// Thrown when the specified time appointment slot is already booked and not canceled, or if the appointment slot with the provided ID is not found.
-        /// </exception>
+        /// <param name="appointmentId">The ID of the appointment to be deleted.</param>
+        /// <returns>Returns true if the appointment is successfully deleted.</returns>
+        /// <exception cref="System.Exception">Thrown if the appointment with the specified ID is not found, 
+        /// or if the appointment is already booked and cannot be canceled.</exception>
+        /// <remarks>
+        /// The method first checks if the appointment exists. If it does not, an exception is thrown.
+        /// If the appointment exists but is already booked and not canceled, an exception is thrown indicating it cannot be deleted.
+        /// If the appointment is either not booked or is booked but canceled, it is then deleted.
+        /// </remarks
         public async Task<bool> DeleteTimeAppointmentAsync(int appointmentId)
         {
             var timeAppointment = await _doctorRepository.FindAppointmentByAppointmentId(appointmentId); 
@@ -223,19 +222,6 @@ namespace Application.Services
             }
             return true;
         }
-
-
-        private static int CalculateAge(DateTime dateOfBirth)
-        {
-            var today = DateTime.Today;
-            var age = today.Year - dateOfBirth.Year;
-
-            // Go back to the year in which the person was born in case of a leap year
-            if (dateOfBirth.Date > today.AddYears(-age)) age--;
-            return age;
-        }
-
-
     }
 
   

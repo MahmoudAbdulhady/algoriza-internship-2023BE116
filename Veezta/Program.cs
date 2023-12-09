@@ -51,6 +51,17 @@ builder.Services.AddScoped<IAdminService, AdminServices>();
 
 
 
+builder.Services.AddAuthentication()
+    .AddGoogle(options =>
+    {
+        IConfigurationSection googleAuthNSection =
+        builder.Configuration.GetSection("Authentication:Google");
+        options.ClientId = googleAuthNSection["ClientId"];
+        options.ClientSecret = googleAuthNSection["ClientSecret"];
+    });
+
+
+
 var smtpSettings = builder.Configuration.GetSection("SmtpSettings").Get<SmtpSettings>();
 builder.Services.AddSingleton(smtpSettings);
 builder.Services.AddScoped<IEmailSender, EmailSender>();

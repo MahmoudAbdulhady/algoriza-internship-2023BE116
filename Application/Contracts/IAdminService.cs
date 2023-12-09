@@ -14,7 +14,7 @@ namespace Application.Contracts
         Task<DoctorDTO> GetDoctorByIdAsync(int doctorId);
         Task<bool> DeleteDoctorAsync(int doctorId);
         int GetTotalNumOfDoctors();
-        Task<bool> DoctorUpdateAsync(int doctorId, DoctorUpdateDTO model);
+        Task<bool> DoctorUpdateAsync(DoctorUpdateDTO model);
         Task<(IEnumerable<DoctorDTO>, int TotalCount)> GetAllDoctorsAsync(PaginationAndSearchDTO request);
         Task<int> TotalNumberOfPatients();
         Task<(IEnumerable<PatientDTO>, int)> GetAllPatientsAsync(PaginationAndSearchDTO request);

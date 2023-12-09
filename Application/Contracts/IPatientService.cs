@@ -11,7 +11,7 @@ namespace Application.Contracts
     {
         Task<bool> RegisterPatientAsync(PatientRegisterDTO model);
         Task<bool> LoginPatientAsync(LoginDTO model);
-        Task<IEnumerable<AppointmentDTO>> GetAppointmentsForDoctorAsync();
+        Task<(IEnumerable<AppointmentDTO>, int totalCount)> GetAppointmentsForDoctorAsync(PaginationAndSearchDTO request);
         Task<bool> CreateNewBooking(int timeId, string patientId, string? couponName = null);
         Task<bool> CancelBookingAsync(int bookingId);
         Task<IEnumerable<PatientBookingDTO>> GetPatientSpecificBookingsAsync(string patientId);

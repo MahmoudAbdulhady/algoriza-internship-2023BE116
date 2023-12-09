@@ -11,7 +11,7 @@ namespace Domain.Interfaces
 {
     public interface IDoctorRepository
     {
-        Task<(IEnumerable<Booking>, int)> GetDoctorApptAsync(PaginationAndSearchDTO request);
+        Task<(IEnumerable<Appointement>, int)> GetDoctorApptAsync(PaginationAndSearchDTO request , int doctorId);
         Task UpdateDoctorPrice(int doctorId, int newPrice);
 
         Task<Appointement> AddDoctorAppointment(Appointement appointement);

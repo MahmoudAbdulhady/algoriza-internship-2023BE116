@@ -1,4 +1,5 @@
-﻿using Domain.Entities;
+﻿using Domain.DTOS;
+using Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +10,7 @@ namespace Domain.Interfaces
 {
     public interface IPatientRepository
     {
-        Task<IEnumerable<Time>> GetDoctorApptAsync();
+        Task<(IEnumerable<Time>, int totalCounts)> GetDoctorApptAsync(PaginationAndSearchDTO request);
         Task CreateBookingAsync(Booking booking);
         Task<bool> CancelAppointment(int bookingId);
         Task<Booking>FindyBookingById (int bookingId);

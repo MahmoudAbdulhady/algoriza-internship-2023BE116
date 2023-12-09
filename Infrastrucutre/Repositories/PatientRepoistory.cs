@@ -1,4 +1,5 @@
-﻿using Domain.Entities;
+﻿using Domain.DTOS;
+using Domain.Entities;
 using Domain.Enums;
 using Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -64,14 +65,39 @@ namespace Infrastrucutre.Repositories
             return booking;
         }
 
-        public async Task<IEnumerable<Time>> GetDoctorApptAsync()
+        public async Task<(IEnumerable<Time> , int totalCounts)> GetDoctorApptAsync(PaginationAndSearchDTO request)
         {
-            return await _veeztaDbContext.Times
-                .Include(a => a.Appointement)   // Appointment Table 
-                .Include(a => a.Appointement.Doctor) // Doctor Table
-                .Include(a => a.Appointement.Doctor.User) // Identity  Table
-                .Include(a => a.Appointement.Doctor.Specialization) // Specalization Table               
-                .ToListAsync();
+
+            var query = _veeztaDbContext.Times
+                .Include(a => a.Appointement)
+                .Include(a => a.Appointement.Doctor)
+                .Include(a => a.Appointement.Doctor.User)
+                .Include(a => a.Appointement.Doctor.Specialization)
+                .AsQueryable();
+
+
+            // Search functionality
+            if (!string.IsNullOrWhiteSpace(request.SearchTerm))
+            {
+                query = query.Where(d => d.Appointement.Doctor.User.FullName.Contains(request.SearchTerm) ||
+                                    d.Appointement.Doctor.User.Email.Contains(request.SearchTerm) ||
+                                    d.Appointement.Doctor.Specialization.SpecializationName.Contains(request.SearchTerm));
+            }
+
+            // Pagination
+            int totalCount = await query.CountAsync();
+            var doctors = await query.Skip((request.PageNumber - 1) * request.PageSize).Take(request.PageSize)
+                                     .ToListAsync();
+
+            return (doctors, totalCount);
+
+
+            //return await _veeztaDbContext.Times
+            //    .Include(a => a.Appointement)   // Appointment Table 
+            //    .Include(a => a.Appointement.Doctor) // Doctor Table
+            //    .Include(a => a.Appointement.Doctor.User) // Identity  Table
+            //    .Include(a => a.Appointement.Doctor.Specialization) // Specalization Table               
+            //    .ToListAsync();
         }
 
         public async Task<IEnumerable<Booking>> GetPatientBookings()

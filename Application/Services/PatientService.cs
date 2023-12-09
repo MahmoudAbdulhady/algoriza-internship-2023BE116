@@ -105,18 +105,28 @@ namespace Application.Services
         }
 
         /// <summary>
-        /// Asynchronously retrieves a collection of appointments grouped by doctor. Each doctor's appointments are further 
-        /// grouped by day of the week, providing a detailed schedule including time slots.
+        /// Retrieves a paginated and grouped list of doctor appointments based on the specified search and pagination criteria.
         /// </summary>
+        /// <param name="request">An object containing the search criteria and pagination parameters.</param>
+        /// <remarks>
+        /// This method fetches appointments from the repository using the provided <paramref name="request"/>,
+        /// groups them by doctor's full name, specialization, price, and day, and then maps them to <see cref="AppointmentDTO"/>.
+        /// If no appointments are found, it throws an exception.
+        /// </remarks>
         /// <returns>
-        /// A collection of <see cref="AppointmentDTO"/> objects. Each object contains the doctor's name, specialization, 
-        /// consultation price, and a list of <see cref="DayScheduleDTO"/> objects. Each <see cref="DayScheduleDTO"/> object 
-        /// represents a specific day of the week and includes a list of time slots (start time to end time) for available appointments.
+        /// A tuple containing a list of <see cref="AppointmentDTO"/> representing the grouped appointments and
+        /// the total count of appointments found for the given criteria.
         /// </returns>
-        public async Task<IEnumerable<AppointmentDTO>> GetAppointmentsForDoctorAsync()
+        /// <exception cref="Exception">Thrown when no appointments are found.</exception>
+        public async Task<(IEnumerable<AppointmentDTO>, int totalCount)> GetAppointmentsForDoctorAsync(PaginationAndSearchDTO request)
         {
-            var Times = await _patientRepository.GetDoctorApptAsync();
-            var doctorSchedules = Times
+            var (times, totalCount)  = await _patientRepository.GetDoctorApptAsync(request);
+            if (times == null)
+            {
+                throw new Exception("No Appointments were found");
+            }
+
+            var doctorSchedules = times
                 .GroupBy(a => new { a.Appointement.Doctor.User.FullName, a.Appointement.Doctor.Specialization.SpecializationName, a.Appointement.Doctor.Price, a.Appointement.Days })
                 .Select(doctorGroup => new AppointmentDTO
                 {
@@ -134,95 +144,92 @@ namespace Application.Services
                         })
                .ToList()
                 }).ToList();
-            return doctorSchedules;
+            return (doctorSchedules , totalCount);
         }
 
 
         /// <summary>
-        /// Creates a new booking for a specified appointment time and patient. Optionally applies a coupon if provided and valid.
+        /// Creates a new booking for a given appointment. It optionally applies a coupon if provided and valid. 
+        /// It checks if the appointment time is available and if the coupon can be applied based on the number of completed requests by the patient.
         /// </summary>
-        /// <param name="timeId">The ID of the appointment time for which the booking is to be made.</param>
-        /// <param name="patientId">The ID of the patient making the booking.</param>
-        /// <param name="couponName">Optional. The name of the coupon to be applied to the booking. If null or not provided, no coupon is applied.</param>
-        /// <returns>
-        /// A boolean value indicating whether the booking was successfully created.
-        /// Returns true if the booking is successfully created, otherwise false.
-        /// </returns>
-        /// <exception cref="Exception">
-        /// Throws an exception if the appointment time specified by timeId is not found, if the appointment time is already booked,
-        /// if the coupon is invalid or inactive, or if the patient does not meet the criteria to use the coupon.
-        /// </exception>
+        /// <param name="appointmentId">The ID of the appointment for which the booking is being created.</param>
+        /// <param name="patientId">The ID of the patient who is making the booking.</param>
+        /// <param name="couponName">The name of the coupon to apply to the booking. This is optional.</param>
+        /// <returns>Returns true if the booking is successfully created.</returns>
+        /// <exception cref="System.Exception">Thrown if the appointment time is not found, 
+        /// if the appointment time is already booked, if the coupon is invalid, inactive, 
+        /// or already used, or if the patient does not have enough completed requests to use the coupon.</exception>
         public async Task<bool>CreateNewBooking(int appointmentId, string patientId , string? couponName = null)
-        {
-            var appointmentTime = await _doctorRepository.FindAppointmentByAppointmentId(appointmentId);
-            if (appointmentTime == null)
             {
-                throw new Exception($"Appointment time with ID {appointmentId} not found.");
-            }
-            var originalPrice = appointmentTime.Appointement.Doctor.Price;
-            var priceAfterCoupon = appointmentTime.Appointement.Doctor.Price;
-
-
-            var booking = await _patientRepository.FindyBookingById(appointmentId);
-
-            if(booking != null)
-            {
-                throw new Exception($"Appointment time with ID {appointmentId} is already Booked !.");
-            }
-
-            //Checking On Coupon
-             bool isCouponUsed = false;
-            if (!string.IsNullOrWhiteSpace(couponName))
-            {
-                var coupon = await _couponRepository.FindCouponByName(couponName);
-                if (coupon != null && coupon.IsActive)
+                var appointmentTime = await _doctorRepository.FindAppointmentByAppointmentId(appointmentId);
+                if (appointmentTime == null)
                 {
-                    // Check if the patient has completed enough requests
-                    int completedRequests = await _couponRepository.GetNumberOfCompletedRequestByPatientId(patientId);
-                    if (completedRequests == 5)
+                    throw new Exception($"Appointment time with ID {appointmentId} not found.");
+                }
+                var originalPrice = appointmentTime.Appointement.Doctor.Price;
+                var priceAfterCoupon = appointmentTime.Appointement.Doctor.Price;
+
+
+                var booking = await _patientRepository.FindyBookingById(appointmentId);
+
+                if(booking != null)
+                {
+                    throw new Exception($"Appointment time with ID {appointmentId} is already Booked !.");
+                }
+
+                //Checking On Coupon
+                 bool isCouponUsed = false;
+                if (!string.IsNullOrWhiteSpace(couponName))
+                {
+                    var coupon = await _couponRepository.FindCouponByName(couponName);
+                    if (coupon != null && coupon.IsActive)
                     {
-                        coupon.PatientId = patientId;
-                        if(coupon.PatientId == patientId && completedRequests == 5)
+                        // Check if the patient has completed enough requests
+                        int completedRequests = await _couponRepository.GetNumberOfCompletedRequestByPatientId(patientId);
+                        if (completedRequests == 5)
                         {
-                            throw new Exception("You have already Used This Coupon!");
+                            coupon.PatientId = patientId;
+                            if(coupon.PatientId == patientId && completedRequests == 5)
+                            {
+                                throw new Exception("You have already Used This Coupon!");
+                            }
+                            isCouponUsed = true;
+                            priceAfterCoupon = (int)appointmentTime.Appointement.Doctor.Price - 50;
                         }
-                        isCouponUsed = true;
-                        priceAfterCoupon = (int)appointmentTime.Appointement.Doctor.Price - 50;
-                    }
-                    else if(completedRequests == 10)
-                    {
-                        coupon.PatientId = patientId;
-                        if (coupon.PatientId == patientId && completedRequests == 11)
+                        else if(completedRequests == 10)
                         {
-                            throw new Exception("You have already Used This Coupon!");
+                            coupon.PatientId = patientId;
+                            if (coupon.PatientId == patientId && completedRequests == 11)
+                            {
+                                throw new Exception("You have already Used This Coupon!");
+                            }
+                            isCouponUsed = true;
+                            priceAfterCoupon = (int)appointmentTime.Appointement.Doctor.Price - 100;
                         }
-                        isCouponUsed = true;
-                        priceAfterCoupon = (int)appointmentTime.Appointement.Doctor.Price - 100;
-                    }
                     
+                        else
+                        {
+                            throw new Exception("Patient does not have enough completed requests to use the coupon.");
+                        }
+                    }
                     else
                     {
-                        throw new Exception("Patient does not have enough completed requests to use the coupon.");
+                        throw new Exception("Invalid or inactive coupon.");
                     }
                 }
-                else
-                {
-                    throw new Exception("Invalid or inactive coupon.");
-                }
-            }
 
-                var newBooking = new Booking
-                {
-                    AppointmentId = appointmentTime.AppointmentId,
-                    PatientId = patientId,
-                    IsCouponUsed = isCouponUsed,
-                    Price = (int)originalPrice,
-                    PriceAfterCoupon = (int)priceAfterCoupon, 
-                };
-                await _patientRepository.CreateBookingAsync(newBooking);
+                    var newBooking = new Booking
+                    {
+                        AppointmentId = appointmentTime.AppointmentId,
+                        PatientId = patientId,
+                        IsCouponUsed = isCouponUsed,
+                        Price = (int)originalPrice,
+                        PriceAfterCoupon = (int)priceAfterCoupon, 
+                    };
+                    await _patientRepository.CreateBookingAsync(newBooking);
           
             
-            return true;
+                return true;
     
         }
 
@@ -248,15 +255,18 @@ namespace Application.Services
         }
 
         /// <summary>
-        /// Asynchronously retrieves all bookings specifically associated with a given patient. This function filters bookings 
-        /// by the patient's ID and formats the data into a collection of PatientBookingDTO objects.
+        /// Retrieves a list of bookings specific to a patient. Each booking includes details about the doctor, 
+        /// the specialization, appointment price, contact information, and appointment times.
         /// </summary>
-        /// <param name="patientId">The unique identifier for the patient whose bookings are to be retrieved.</param>
-        /// <returns>
-        /// An IEnumerable collection of <see cref="PatientBookingDTO"/> objects, each representing a booking for the specified patient. 
-        /// Each object includes details such as the doctor's name, specialization, price, phone number, appointment day, 
-        /// appointment image, start and end times of the appointment, and the booking status.
-        /// </returns>
+        /// <param name="patientId">The ID of the patient for whom to retrieve bookings.</param>
+        /// <returns>A collection of <see cref="PatientBookingDTO"/> objects, each representing a booking made by the specified patient.</returns>
+        /// <exception cref="System.Exception">Thrown if there is an error retrieving bookings from the repository.</exception>
+        /// <remarks>
+        /// This method fetches all patient bookings and filters them based on the provided patient ID.
+        /// If the patient has no bookings or there is an issue retrieving bookings, an exception is thrown.
+        /// Each booking includes detailed information such as the doctor's name, specialization, appointment times, 
+        /// and final price after any applied coupons.
+        /// </remarks>
         public async Task<IEnumerable<PatientBookingDTO>>GetPatientSpecificBookingsAsync(string patientId)
         {
             var bookings = await _patientRepository.GetPatientBookings();
