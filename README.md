@@ -4,7 +4,7 @@ You can use the Endpoints to add doctors , specalizations , doctor Appointments 
 
 
 
-installations steps
+###  :electric_plug: Installation
 
 Prerequisites
 .NET 6 SDK
