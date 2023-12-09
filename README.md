@@ -47,7 +47,7 @@ Veezta
 |    ├── appsettings.json
 |    └── Program.cs
 
-Features
+## :zap: Features
 Doctor Management
 Add Doctors: Easily onboard new doctors into the system with detailed profiles.
 Remove Doctors: Safely remove doctors from the system when they are no longer available or affiliated.
