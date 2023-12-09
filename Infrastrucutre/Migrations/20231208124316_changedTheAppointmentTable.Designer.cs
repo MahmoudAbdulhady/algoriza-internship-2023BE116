@@ -4,6 +4,7 @@ using Infrastrucutre;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastrucutre.Migrations
 {
     [DbContext(typeof(VeeztaDbContext))]
-    partial class VeeztaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20231208124316_changedTheAppointmentTable")]
+    partial class changedTheAppointmentTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -30,13 +32,20 @@ namespace Infrastrucutre.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AppointmentId"), 1L, 1);
 
-                    b.Property<int>("Days")
+                    b.Property<int>("DayOfWeekId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("DayTimeId")
                         .HasColumnType("int");
 
                     b.Property<int>("DoctorId")
                         .HasColumnType("int");
 
                     b.HasKey("AppointmentId");
+
+                    b.HasIndex("DayOfWeekId");
+
+                    b.HasIndex("DayTimeId");
 
                     b.HasIndex("DoctorId");
 
@@ -50,9 +59,6 @@ namespace Infrastrucutre.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("BookingId"), 1L, 1);
-
-                    b.Property<int>("AppointmentId")
-                        .HasColumnType("int");
 
                     b.Property<bool>("IsCouponUsed")
                         .HasColumnType("bit");
@@ -70,12 +76,14 @@ namespace Infrastrucutre.Migrations
                     b.Property<byte>("Status")
                         .HasColumnType("tinyint");
 
+                    b.Property<int>("TimeId")
+                        .HasColumnType("int");
+
                     b.HasKey("BookingId");
 
-                    b.HasIndex("AppointmentId")
-                        .IsUnique();
-
                     b.HasIndex("PatientId");
+
+                    b.HasIndex("TimeId");
 
                     b.ToTable("Bookings");
                 });
@@ -202,10 +210,10 @@ namespace Infrastrucutre.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "dde6dad3-5d30-4f27-87f1-ec5fb8a441df",
+                            Id = "a72f3d63-2852-46f1-a581-271281e7c8b6",
                             AccessFailedCount = 0,
                             AccountRole = 0,
-                            ConcurrencyStamp = "3ad027c3-eeaf-48d5-851e-226b3a415861",
+                            ConcurrencyStamp = "8164d310-bed6-4ce3-b5b3-26e5e556e609",
                             DateOfBirth = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified).AddTicks(9),
                             Email = "VeeztaAdmin@gmail.com",
                             EmailConfirmed = false,
@@ -216,9 +224,43 @@ namespace Infrastrucutre.Migrations
                             LastName = "Admin",
                             LockoutEnabled = false,
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "8f485a39-0a2e-4492-b3c7-f0c325b17281",
+                            SecurityStamp = "e09369d3-6e47-4f8b-9608-e5eca3f67baa",
                             TwoFactorEnabled = false
                         });
+                });
+
+            modelBuilder.Entity("Domain.Entities.DayOfTheWeek", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DaysOfTheWeeks");
+                });
+
+            modelBuilder.Entity("Domain.Entities.DayTimes", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<string>("Time")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DayTimes");
                 });
 
             modelBuilder.Entity("Domain.Entities.Doctor", b =>
@@ -354,20 +396,21 @@ namespace Infrastrucutre.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TimeId"), 1L, 1);
 
+                    b.Property<int>("AppointementAppointmentId")
+                        .HasColumnType("int");
+
                     b.Property<int>("AppointmentId")
                         .HasColumnType("int");
 
-                    b.Property<string>("EndTime")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<DateTime>("EndTime")
+                        .HasColumnType("datetime2");
 
-                    b.Property<string>("StartTime")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<DateTime>("StartTime")
+                        .HasColumnType("datetime2");
 
                     b.HasKey("TimeId");
 
-                    b.HasIndex("AppointmentId");
+                    b.HasIndex("AppointementAppointmentId");
 
                     b.ToTable("Times");
                 });
@@ -507,32 +550,48 @@ namespace Infrastrucutre.Migrations
 
             modelBuilder.Entity("Domain.Entities.Appointement", b =>
                 {
+                    b.HasOne("Domain.Entities.DayOfTheWeek", "DayOfTheWeek")
+                        .WithMany()
+                        .HasForeignKey("DayOfWeekId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.DayTimes", "DayTimes")
+                        .WithMany()
+                        .HasForeignKey("DayTimeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Domain.Entities.Doctor", "Doctor")
                         .WithMany("Appointements")
                         .HasForeignKey("DoctorId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.Navigation("DayOfTheWeek");
+
+                    b.Navigation("DayTimes");
+
                     b.Navigation("Doctor");
                 });
 
             modelBuilder.Entity("Domain.Entities.Booking", b =>
                 {
-                    b.HasOne("Domain.Entities.Appointement", "Appointement")
-                        .WithOne("Booking")
-                        .HasForeignKey("Domain.Entities.Booking", "AppointmentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("Domain.Entities.CustomUser", "Patient")
                         .WithMany()
                         .HasForeignKey("PatientId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Appointement");
+                    b.HasOne("Domain.Entities.Time", "Time")
+                        .WithMany("Bookings")
+                        .HasForeignKey("TimeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Patient");
+
+                    b.Navigation("Time");
                 });
 
             modelBuilder.Entity("Domain.Entities.Coupon", b =>
@@ -566,8 +625,8 @@ namespace Infrastrucutre.Migrations
             modelBuilder.Entity("Domain.Entities.Time", b =>
                 {
                     b.HasOne("Domain.Entities.Appointement", "Appointement")
-                        .WithMany("Times")
-                        .HasForeignKey("AppointmentId")
+                        .WithMany()
+                        .HasForeignKey("AppointementAppointmentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -625,14 +684,6 @@ namespace Infrastrucutre.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Domain.Entities.Appointement", b =>
-                {
-                    b.Navigation("Booking")
-                        .IsRequired();
-
-                    b.Navigation("Times");
-                });
-
             modelBuilder.Entity("Domain.Entities.CustomUser", b =>
                 {
                     b.Navigation("Coupons");
@@ -646,6 +697,11 @@ namespace Infrastrucutre.Migrations
             modelBuilder.Entity("Domain.Entities.Specialization", b =>
                 {
                     b.Navigation("Doctors");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Time", b =>
+                {
+                    b.Navigation("Bookings");
                 });
 #pragma warning restore 612, 618
         }

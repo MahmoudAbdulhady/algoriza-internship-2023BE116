@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Domain.Enums
 {
-    public enum BookingStatus
+    public enum BookingStatus:byte
     {
         Pending,
         Completed,

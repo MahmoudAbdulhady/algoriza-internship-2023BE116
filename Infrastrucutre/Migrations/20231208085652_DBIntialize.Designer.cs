@@ -4,6 +4,7 @@ using Infrastrucutre;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastrucutre.Migrations
 {
     [DbContext(typeof(VeeztaDbContext))]
-    partial class VeeztaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20231208085652_DBIntialize")]
+    partial class DBIntialize
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -30,7 +32,7 @@ namespace Infrastrucutre.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AppointmentId"), 1L, 1);
 
-                    b.Property<int>("Days")
+                    b.Property<int>("DaysOfTheWeek")
                         .HasColumnType("int");
 
                     b.Property<int>("DoctorId")
@@ -67,15 +69,19 @@ namespace Infrastrucutre.Migrations
                     b.Property<int>("PriceAfterCoupon")
                         .HasColumnType("int");
 
-                    b.Property<byte>("Status")
-                        .HasColumnType("tinyint");
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TimeId")
+                        .HasColumnType("int");
 
                     b.HasKey("BookingId");
 
-                    b.HasIndex("AppointmentId")
-                        .IsUnique();
+                    b.HasIndex("AppointmentId");
 
                     b.HasIndex("PatientId");
+
+                    b.HasIndex("TimeId");
 
                     b.ToTable("Bookings");
                 });
@@ -202,10 +208,10 @@ namespace Infrastrucutre.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "dde6dad3-5d30-4f27-87f1-ec5fb8a441df",
+                            Id = "54f9243c-6bd8-4204-b5c0-565e747efb58",
                             AccessFailedCount = 0,
                             AccountRole = 0,
-                            ConcurrencyStamp = "3ad027c3-eeaf-48d5-851e-226b3a415861",
+                            ConcurrencyStamp = "854d48fa-bc9e-4915-89a2-0c7bfc99eedd",
                             DateOfBirth = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified).AddTicks(9),
                             Email = "VeeztaAdmin@gmail.com",
                             EmailConfirmed = false,
@@ -216,7 +222,7 @@ namespace Infrastrucutre.Migrations
                             LastName = "Admin",
                             LockoutEnabled = false,
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "8f485a39-0a2e-4492-b3c7-f0c325b17281",
+                            SecurityStamp = "9073e335-3398-49b7-a394-cc3754e7effb",
                             TwoFactorEnabled = false
                         });
                 });
@@ -357,13 +363,11 @@ namespace Infrastrucutre.Migrations
                     b.Property<int>("AppointmentId")
                         .HasColumnType("int");
 
-                    b.Property<string>("EndTime")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<DateTime>("EndTime")
+                        .HasColumnType("datetime2");
 
-                    b.Property<string>("StartTime")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<DateTime>("StartTime")
+                        .HasColumnType("datetime2");
 
                     b.HasKey("TimeId");
 
@@ -519,8 +523,8 @@ namespace Infrastrucutre.Migrations
             modelBuilder.Entity("Domain.Entities.Booking", b =>
                 {
                     b.HasOne("Domain.Entities.Appointement", "Appointement")
-                        .WithOne("Booking")
-                        .HasForeignKey("Domain.Entities.Booking", "AppointmentId")
+                        .WithMany("Bookings")
+                        .HasForeignKey("AppointmentId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -530,9 +534,17 @@ namespace Infrastrucutre.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Domain.Entities.Time", "Time")
+                        .WithMany("Bookings")
+                        .HasForeignKey("TimeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Appointement");
 
                     b.Navigation("Patient");
+
+                    b.Navigation("Time");
                 });
 
             modelBuilder.Entity("Domain.Entities.Coupon", b =>
@@ -565,13 +577,13 @@ namespace Infrastrucutre.Migrations
 
             modelBuilder.Entity("Domain.Entities.Time", b =>
                 {
-                    b.HasOne("Domain.Entities.Appointement", "Appointement")
+                    b.HasOne("Domain.Entities.Appointement", "Appointements")
                         .WithMany("Times")
                         .HasForeignKey("AppointmentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Appointement");
+                    b.Navigation("Appointements");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -627,8 +639,7 @@ namespace Infrastrucutre.Migrations
 
             modelBuilder.Entity("Domain.Entities.Appointement", b =>
                 {
-                    b.Navigation("Booking")
-                        .IsRequired();
+                    b.Navigation("Bookings");
 
                     b.Navigation("Times");
                 });
@@ -646,6 +657,11 @@ namespace Infrastrucutre.Migrations
             modelBuilder.Entity("Domain.Entities.Specialization", b =>
                 {
                     b.Navigation("Doctors");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Time", b =>
+                {
+                    b.Navigation("Bookings");
                 });
 #pragma warning restore 612, 618
         }

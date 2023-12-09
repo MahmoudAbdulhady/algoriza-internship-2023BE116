@@ -40,7 +40,7 @@ namespace Infrastrucutre.Repositories
                 }
                 else
                 {
-                    throw new Exception($"Appointnemt Id {bookingId} can't be cancled since its Still Pending");
+                    throw new Exception($"Appointnemt Id {bookingId} can't be cancled since its a Completed Appointment");
                 }
             }
             return true;
@@ -55,31 +55,31 @@ namespace Infrastrucutre.Repositories
         //TODO I need to review this section 
         public async Task<Booking> FindyBookingById(int bookingId)
         {
-            var booking = await _veeztaDbContext.Bookings.FirstOrDefaultAsync(b => b.TimeId == bookingId);
+            var booking = await _veeztaDbContext.Bookings.FirstOrDefaultAsync(b => b.BookingId == bookingId);
             return booking;
         }
-        public async Task<bool> FindyBookingByTimeId(int timeId)
+        public async Task<bool> FindyBookingByAppoitmentId(int appointmentId)
         {
-            var booking = await _veeztaDbContext.Bookings.AnyAsync(b => b.TimeId == timeId);
+            var booking = await _veeztaDbContext.Bookings.AnyAsync(b => b.AppointmentId == appointmentId);
             return booking;
         }
 
         public async Task<IEnumerable<Time>> GetDoctorApptAsync()
         {
             return await _veeztaDbContext.Times
-                .Include(a => a.Appointements)   // Appointment Table 
-                .Include(a => a.Appointements.Doctor) // Doctor Table
-                .Include(a => a.Appointements.Doctor.User) // Identity  Table
-                .Include(a => a.Appointements.Doctor.Specialization) // Specalization Table               
+                .Include(a => a.Appointement)   // Appointment Table 
+                .Include(a => a.Appointement.Doctor) // Doctor Table
+                .Include(a => a.Appointement.Doctor.User) // Identity  Table
+                .Include(a => a.Appointement.Doctor.Specialization) // Specalization Table               
                 .ToListAsync();
         }
 
         public async Task<IEnumerable<Booking>> GetPatientBookings()
         {
             return await _veeztaDbContext.Bookings
+                    .Include(t=> t.Appointement.Times)
                 .Include(d => d.Appointement.Doctor) // Doctor Table
                 .Include(a => a.Appointement) // Appointment Table
-                .Include(t => t.Time) // Time Table
                 .Include(u=> u.Appointement.Doctor.User) // Identity Table
                 .Include(s=> s.Appointement.Doctor.Specialization) //Specalization Table
                 .ToListAsync();

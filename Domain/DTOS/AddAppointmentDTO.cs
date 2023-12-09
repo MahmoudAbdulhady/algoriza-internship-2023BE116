@@ -12,17 +12,11 @@ namespace Domain.DTOS
     {
         [Required]
         public int DoctorId { get; set; }
-        [Required]
 
+
+        [Required]
         public int Price { get; set; }
-        [Required]
-
-        public DaysOfTheWeek DaysOfTheWeek { get; set; }
-        [Required]
-
-        public DateTime StartTime { get; set; }
-        [Required]
-        public DateTime EndTime { get; set; }
+        public List<DayAppointmentDTO> DayAppointments { get; set; }
 
     }
 }

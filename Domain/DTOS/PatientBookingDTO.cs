@@ -13,6 +13,8 @@ namespace Domain.DTOS
         public string Specailization { get; set; }
         public string PhoneNumber { get; set; }
         public string Day { get; set; }
+        public string FinalPrice { get; set; }
+
         public string StartTime { get; set; }
         public string EndTime { get; set; } 
         public string Image { get; set; }

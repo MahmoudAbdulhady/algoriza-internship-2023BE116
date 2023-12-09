@@ -40,7 +40,7 @@ namespace Veezta.Controllers
                 var patient = await _patientService.LoginPatientAsync(model);
                 if (patient)
                 {
-                    return Ok("Patient Registered Successfully!");
+                    return Ok("Login Successfully!");
                 }
             }
             return Unauthorized("Invalid Email or Password , Please Try Again !");
@@ -60,8 +60,8 @@ namespace Veezta.Controllers
         [HttpPost("CreateNewBooking")]
         public async Task<IActionResult> BookAppointment([FromForm] CreateBookingDTO bookingModel)
         {
-            await _patientService.CreateNewBooking(bookingModel.TimeId , bookingModel.PatientId , bookingModel.CouponName);
-            return Ok($"Appointment Time With ID: {bookingModel.TimeId} is sucessuffly Booked!");
+            await _patientService.CreateNewBooking(bookingModel.appointmentId, bookingModel.PatientId , bookingModel.CouponName);
+            return Ok($"Appointment Time With ID: {bookingModel.appointmentId} is sucessuffly Booked!");
         }
 
         [HttpPost("cancelAppointment")]

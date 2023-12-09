@@ -10,9 +10,9 @@ namespace Application.Contracts
     public interface IDoctorService
     {
         Task<bool> DoctorLoginAsync(LoginDTO model);
-        Task<IEnumerable<DoctorBookingsDTO>> GetAppointmentsForDoctorAsync(int doctorId);
-        Task<bool> AddDoctorAppointment(AddAppointmentDTO doctorDTO);
-        Task<bool> DeleteTimeAppointmentAsync(int timeId);
+        Task<(IEnumerable<DoctorBookingsDTO>, int)> GetAppointmentsForDoctorAsync(int doctorId, PaginationAndSearchDTO request);
+        Task<bool> AddDoctorAppointmentAsync(AddAppointmentDTO doctorDTO);
+        Task<bool> DeleteTimeAppointmentAsync(int appointmentId);
         Task<bool> DoctorUpdateAppointmentAsync(int timeId, UpdateAppointmentDTO model);
         Task<bool> DoctorConfirmCheckUp(int bookingId);
         

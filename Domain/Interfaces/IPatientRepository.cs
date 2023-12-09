@@ -14,7 +14,7 @@ namespace Domain.Interfaces
         Task<bool> CancelAppointment(int bookingId);
         Task<Booking>FindyBookingById (int bookingId);
         Task<IEnumerable<Booking>> GetPatientBookings();
-        Task<bool> FindyBookingByTimeId(int timeId);
+        Task<bool> FindyBookingByAppoitmentId(int ppointmentId);
 
 
     }

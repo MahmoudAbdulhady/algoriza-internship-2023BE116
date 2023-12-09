@@ -11,16 +11,15 @@ namespace Domain.Entities
     {
         [Key]
         public int TimeId { get; set; }
-        public DateTime StartTime { get; set; }
-        public DateTime EndTime { get; set; }
+        public string StartTime { get; set; }
+        public string EndTime { get; set; }
 
         //Foregin Key & Naviagation Property 
         public int AppointmentId { get; set; }
-        public Appointement Appointements { get; set; }
+        public Appointement Appointement { get; set; }
 
 
 
-        //Navigation Property (Booking Table) 
-        public ICollection<Booking> Bookings { get; set; }
+        
     }
 }

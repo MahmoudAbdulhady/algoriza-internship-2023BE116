@@ -32,20 +32,16 @@ namespace Veezta.Controllers
         }
 
         [HttpGet("GetSpecificDoctorAppointment")]
-        public async Task<IActionResult> GetSpecificDoctorAppointment(int doctorId)
+        public async Task<IActionResult> GetSpecificDoctorAppointment(int doctorId , [FromBody]PaginationAndSearchDTO request)
         {
-            var appointments = await _doctorService.GetAppointmentsForDoctorAsync(doctorId);
-            if (!appointments.Any())
-            {
-                return NotFound("No Appointments To Show Doctors didn't Provide any Appointments !");
-            }
-            return Ok(appointments);
+            var (appointments,totalcounts) = await _doctorService.GetAppointmentsForDoctorAsync(doctorId , request);
+            return Ok(new { appointments, totalcounts });
         }
 
-        [HttpPost("AddDoctorAppointment")]
-        public async Task<IActionResult> AddDoctorAppointment(AddAppointmentDTO model)
+        [HttpGet("{doctorId}/appointments")]
+        public async Task<IActionResult> AddDoctorAppointment([FromBody]AddAppointmentDTO model)
         {
-            var appointment = await _doctorService.AddDoctorAppointment(model);
+            var appointment = await _doctorService.AddDoctorAppointmentAsync(model);
             if (!ModelState.IsValid)
             {
                 return BadRequest("Invalid Data , Try Again");
@@ -54,14 +50,10 @@ namespace Veezta.Controllers
         }
 
         [HttpDelete("DeleteAppointment")]
-        public async Task<IActionResult> DeleteAppointment(int timeId)
+        public async Task<IActionResult> DeleteAppointment(int appointmentId)
         {
-        await _doctorService.DeleteTimeAppointmentAsync(timeId);
-           
-            {
-                return NotFound($"The ID: {timeId} is not found");
-            }
-            return Ok($"Time ID: {timeId} is Deleted");
+             await _doctorService.DeleteTimeAppointmentAsync(appointmentId);
+            return Ok($"Time ID: {appointmentId} is Deleted");
         }
 
         [HttpPut("DoctorUpdateAppointment")]

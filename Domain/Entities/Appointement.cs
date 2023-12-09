@@ -13,22 +13,22 @@ namespace Domain.Entities
     {
         [Key]
         public int AppointmentId { get; set; } // Primary Key
-        [Required]
-        public DaysOfTheWeek DaysOfTheWeek { get; set; }
 
+     
 
         //Doctor // Foregin Key // Navigation Property
         public int DoctorId { get; set; } 
-        public Doctor Doctor { get; set; } 
+        public Doctor Doctor { get; set; }
+
+   
+
+        public WeekDays Days { get; set; }
 
 
-        // Navigation Property  (Time Table)
+
+        //Navigation Property 
         public ICollection<Time> Times { get; set; }
-
-
-        //Navigation Property (Booking Table) 
-        public ICollection<Booking> Bookings { get; set; }
-
+        public Booking Booking { get; set; }
 
 
     }

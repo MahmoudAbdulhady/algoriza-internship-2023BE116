@@ -22,11 +22,11 @@ namespace Domain.Entities
 
         //AppointnmentId & Navigation Property 
         public int AppointmentId { get; set; }
-        public Appointement Appointement { get; set; }
+        public virtual Appointement Appointement { get; set; }
 
         //TimeId & Navigation Property 
-        public int TimeId { get; set; }
-        public Time Time { get; set; }
+        //public int TimeId { get; set; }
+        //public virtual Time Time { get; set; }
 
         //BookingStatus (Default value is: Pending)
         public BookingStatus Status { get; set; } = BookingStatus.Pending;

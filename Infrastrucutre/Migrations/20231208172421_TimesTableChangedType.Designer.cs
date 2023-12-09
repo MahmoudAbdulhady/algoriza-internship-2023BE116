@@ -4,6 +4,7 @@ using Infrastrucutre;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastrucutre.Migrations
 {
     [DbContext(typeof(VeeztaDbContext))]
-    partial class VeeztaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20231208172421_TimesTableChangedType")]
+    partial class TimesTableChangedType
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -51,9 +53,6 @@ namespace Infrastrucutre.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("BookingId"), 1L, 1);
 
-                    b.Property<int>("AppointmentId")
-                        .HasColumnType("int");
-
                     b.Property<bool>("IsCouponUsed")
                         .HasColumnType("bit");
 
@@ -70,12 +69,14 @@ namespace Infrastrucutre.Migrations
                     b.Property<byte>("Status")
                         .HasColumnType("tinyint");
 
+                    b.Property<int>("TimeId")
+                        .HasColumnType("int");
+
                     b.HasKey("BookingId");
 
-                    b.HasIndex("AppointmentId")
-                        .IsUnique();
-
                     b.HasIndex("PatientId");
+
+                    b.HasIndex("TimeId");
 
                     b.ToTable("Bookings");
                 });
@@ -202,10 +203,10 @@ namespace Infrastrucutre.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "dde6dad3-5d30-4f27-87f1-ec5fb8a441df",
+                            Id = "2a36eea4-4315-4cf0-9490-48b205e63433",
                             AccessFailedCount = 0,
                             AccountRole = 0,
-                            ConcurrencyStamp = "3ad027c3-eeaf-48d5-851e-226b3a415861",
+                            ConcurrencyStamp = "ad1d8da9-5a11-4097-99e9-b11e46a62186",
                             DateOfBirth = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified).AddTicks(9),
                             Email = "VeeztaAdmin@gmail.com",
                             EmailConfirmed = false,
@@ -216,9 +217,43 @@ namespace Infrastrucutre.Migrations
                             LastName = "Admin",
                             LockoutEnabled = false,
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "8f485a39-0a2e-4492-b3c7-f0c325b17281",
+                            SecurityStamp = "d2e3f9b2-3c48-4c5f-b0b4-036add6fa640",
                             TwoFactorEnabled = false
                         });
+                });
+
+            modelBuilder.Entity("Domain.Entities.DayOfTheWeek", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DaysOfTheWeeks");
+                });
+
+            modelBuilder.Entity("Domain.Entities.DayTimes", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<string>("Time")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DayTimes");
                 });
 
             modelBuilder.Entity("Domain.Entities.Doctor", b =>
@@ -518,21 +553,21 @@ namespace Infrastrucutre.Migrations
 
             modelBuilder.Entity("Domain.Entities.Booking", b =>
                 {
-                    b.HasOne("Domain.Entities.Appointement", "Appointement")
-                        .WithOne("Booking")
-                        .HasForeignKey("Domain.Entities.Booking", "AppointmentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("Domain.Entities.CustomUser", "Patient")
                         .WithMany()
                         .HasForeignKey("PatientId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Appointement");
+                    b.HasOne("Domain.Entities.Time", "Time")
+                        .WithMany("Bookings")
+                        .HasForeignKey("TimeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Patient");
+
+                    b.Navigation("Time");
                 });
 
             modelBuilder.Entity("Domain.Entities.Coupon", b =>
@@ -627,9 +662,6 @@ namespace Infrastrucutre.Migrations
 
             modelBuilder.Entity("Domain.Entities.Appointement", b =>
                 {
-                    b.Navigation("Booking")
-                        .IsRequired();
-
                     b.Navigation("Times");
                 });
 
@@ -646,6 +678,11 @@ namespace Infrastrucutre.Migrations
             modelBuilder.Entity("Domain.Entities.Specialization", b =>
                 {
                     b.Navigation("Doctors");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Time", b =>
+                {
+                    b.Navigation("Bookings");
                 });
 #pragma warning restore 612, 618
         }

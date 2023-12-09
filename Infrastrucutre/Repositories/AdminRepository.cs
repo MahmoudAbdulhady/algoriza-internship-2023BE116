@@ -35,7 +35,13 @@ namespace Infrastrucutre.Repositories
         }
         public async Task<Doctor> GetDoctorByIdAsync(int doctorId)
         {
-            return await _veeztaDbContext.Doctors.Include(d => d.User).Include(d => d.Specialization).FirstOrDefaultAsync(d => d.DoctorId == doctorId);
+            return await _veeztaDbContext.Doctors.Include(d => d.User).Include(d => d.Specialization).Include(b=> b.Appointements).FirstOrDefaultAsync(d => d.DoctorId == doctorId);
+        }
+
+        public async Task<bool>GetBookingByDoctorId(int doctorId)
+        {
+            return await _veeztaDbContext.Bookings
+                .Include(a => a.Appointement).Where(a => a.Appointement.DoctorId == doctorId).AnyAsync();
         }
 
         public async Task<bool> DeleteDoctorAsync(Doctor doctor)
@@ -157,6 +163,19 @@ namespace Infrastrucutre.Repositories
 
             return await _veeztaDbContext.Doctors
                 .CountAsync(d => d.CreatedDate >= date24HoursAgo && d.CreatedDate <= currentDate);
+        }
+
+        public async Task<Appointement> GetAppointmentByDoctorId(int doctorId)
+        {
+         var doctorAppointment =  await _veeztaDbContext.Appointments.Where(a => a.DoctorId == doctorId).FirstOrDefaultAsync();
+            return doctorAppointment;
+        }
+
+        public async Task<bool> DeleteDoctorAppointmentAsync(Appointement doctrorAppointment)
+        {
+             _veeztaDbContext.Appointments.Remove(doctrorAppointment);
+            await _veeztaDbContext.SaveChangesAsync();
+            return true;
         }
     }
 }

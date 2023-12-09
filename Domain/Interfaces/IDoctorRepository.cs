@@ -1,4 +1,5 @@
-﻿using Domain.Entities;
+﻿using Domain.DTOS;
+using Domain.Entities;
 using Domain.Enums;
 using System;
 using System.Collections.Generic;
@@ -10,16 +11,17 @@ namespace Domain.Interfaces
 {
     public interface IDoctorRepository
     {
-        Task<IEnumerable<Booking>> GetDoctorApptAsync();
+        Task<(IEnumerable<Booking>, int)> GetDoctorApptAsync(PaginationAndSearchDTO request);
         Task UpdateDoctorPrice(int doctorId, int newPrice);
 
-        Task<Appointement> AddDoctorAppointmentAsync(Appointement appointement);
+        Task<Appointement> AddDoctorAppointment(Appointement appointement);
         Task<Time> UpdateTimeAppointment(Time time);
-        Task<Time> FindAppointmentTimeById(int timeId);
-        Task<Time> DeleteAppointmentTime(int timeId);
+        //Task<Appointement> UpdateTimeAppointment(DayTimes time);
+        Task<Time> FindAppointmentByAppointmentId(int apppointmentId);
+        Task<Time> DeleteAppointmentTime(Time appointment);
         Task<Time> DoctorAppointmentUpdateAsync(Time TimeEntity);
-        Task<bool>ConfirmCheckup(int bookingId);
-        Task<Booking> FindBookingByTimeId(int timeId);
+        Task<bool> ConfirmCheckup(int bookingId);
+        Task<Booking> FindBookingByAppointmentId(int appointmentId);
 
     }
 }

@@ -8,7 +8,7 @@ namespace Application.DTOS
 {
     public class CreateBookingDTO
     {
-        public int TimeId { get; set; }
+        public int appointmentId { get; set; }
         public string PatientId { get; set; }
         public string? CouponName { get; set; }
     }

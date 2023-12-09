@@ -24,7 +24,7 @@ namespace Application.Services
 
 
 
-        public AdminServices(IAdminRepository adminRepository, UserManager<CustomUser> userManager, ISpecializationRepository specilizationRepository , IEmailSender emailSender)
+        public AdminServices(IAdminRepository adminRepository, UserManager<CustomUser> userManager, ISpecializationRepository specilizationRepository, IEmailSender emailSender)
         {
             _adminRepository = adminRepository;
             _userManager = userManager;
@@ -64,6 +64,9 @@ namespace Application.Services
                 await model.ImageUrl.CopyToAsync(stream);
             }
 
+            var imageUrl = $"images/{fileName}";
+
+
             var user = new CustomUser
             {
                 Email = model.Email,
@@ -74,9 +77,9 @@ namespace Application.Services
                 PhoneNumber = model.PhoneNumber,
                 DateOfBirth = DateTime.Parse(model.DateOfBirth),
                 Gender = model.Gender,
-                ImageUrl= fileName,
+                ImageUrl = imageUrl,
                 AccountRole = AccountRole.Doctor
-                
+
             };
             var userResult = await _userManager.CreateAsync(user, model.Password);
             if (!userResult.Succeeded)
@@ -85,6 +88,11 @@ namespace Application.Services
                 throw new Exception($"User creation failed: {string.Join(", ", errors)}");
             }
             await _userManager.AddToRoleAsync(user, AccountRole.Doctor.ToString());
+
+
+            //Bonus Email Sender
+            SendEmailToDoctorAsync(user.Id);
+
 
 
             var specialization = await _specilizationRepository.GetByNameAsync(model.Specialization);
@@ -96,7 +104,7 @@ namespace Application.Services
             }
 
 
-           
+
 
             var doctor = new Doctor
             {
@@ -152,25 +160,25 @@ namespace Application.Services
         public async Task<bool> DeleteDoctorAsync(int doctorId)
         {
             var doctor = await _adminRepository.GetDoctorByIdAsync(doctorId);
-            if (doctor == null)
+            var doctorbookings= await _adminRepository.GetBookingByDoctorId(doctorId);
+            var doctorAppointment = await _adminRepository.GetAppointmentByDoctorId(doctorId);
+            if(doctorbookings)
             {
-                throw new Exception($"No Doctor with This ID: {doctorId} was found, Check DoctorDB again");
+                throw new Exception("This Doctor Can't Be Deleted , Because he as Appointments");
             }
-
-            await _adminRepository.DeleteDoctorAsync(doctor);
-
-            var user = await _userManager.FindByIdAsync(doctor.UserId);
-            if (user != null)
+            else
             {
-                var result = await _userManager.DeleteAsync(user);
-                if (!result.Succeeded)
-                {
-                    return false;
-                }
+                await _adminRepository.DeleteDoctorAppointmentAsync(doctorAppointment);
+                await _adminRepository.DeleteDoctorAsync(doctor);
+                var user = await _userManager.FindByIdAsync(doctor.UserId);
+                _userManager.DeleteAsync(user);
+
             }
             return true;
-
         }
+
+
+
 
         /// <summary>
         /// Retrieves the total number of doctors currently registered in the system.
@@ -284,7 +292,7 @@ namespace Application.Services
         /// <see cref="PatientDTO"/> objects, including details such as email, full name, gender, date of birth, phone number, 
         /// and image URL.
         /// </returns>
-        public async Task<(IEnumerable<CustomUser>, int)> GetAllPatientsAsync(PaginationAndSearchDTO request)
+        public async Task<(IEnumerable<PatientDTO>, int)> GetAllPatientsAsync(PaginationAndSearchDTO request)
         {
             var (patients, totalcount) = await _adminRepository.GetAllPatientsAsync(request);
 
@@ -296,10 +304,10 @@ namespace Application.Services
                 Gender = p.Gender.ToString(),
                 DateOfBirth = p.DateOfBirth.ToShortDateString(),
                 PhoneNumber = p.PhoneNumber,
-                ImageUrl = p.ImageUrl.ToString()
+                ImageUrl = p.ImageUrl?.ToString()
             });
 
-            return (patients, totalcount);
+            return (patientDTO, totalcount);
         }
 
 
@@ -397,7 +405,7 @@ namespace Application.Services
         /// A <see cref="RequestsDTO"/> object containing the total number of requests. 
         /// This may include various statistics or counts related to the requests.
         /// </returns>
-        public async Task<RequestsDTO>GetNumberOfRequestsAsync()
+        public async Task<RequestsDTO> GetNumberOfRequestsAsync()
         {
             return await _adminRepository.GetNumberOfRequests();
         }
@@ -427,12 +435,20 @@ namespace Application.Services
             var doctor = await _userManager.FindByIdAsync(doctorId);
             if (doctor != null)
             {
-                var token = await _userManager.GeneratePasswordResetTokenAsync(doctor);
-                await _userManager.ResetPasswordAsync(doctor, token, "Test@2023");
-                var emailSubject = "DoctorEmailAndPassword";
-                var emailMessage = $"Your account has been created. Your temporary password is: Test@2023. Please change your password upon first login.";
+                // Prepare the email content
+                var emailSubject = "Your Doctor Account Details";
+                var emailMessage = $"Your account has been created with the following details:\n\n" +
+                                   $"Email: {doctor.Email}\n" +
+                                   $"Password: Test@2023\n\n" +
+                                   "Please change your password upon first login.";
 
+                // Send email
                 await _emailSender.SendEmailAsync(doctor.Email, emailSubject, emailMessage);
+            }
+            else
+            {
+                // Handle the case where the doctor is not found
+                throw new Exception("Doctor not found.");
             }
         }
 

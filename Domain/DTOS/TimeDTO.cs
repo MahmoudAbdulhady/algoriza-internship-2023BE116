@@ -1,17 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Domain.DTOS
 {
-    public class UpdateAppointmentDTO
+    public class TimeDTO
     {
-        [Required]
         public string StartTime { get; set; }
-        [Required]
         public string EndTime { get; set; }
     }
 }

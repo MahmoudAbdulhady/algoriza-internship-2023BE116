@@ -79,11 +79,15 @@ namespace Infrastrucutre
                 .HasForeignKey(d => d.SpecializationId);
 
 
-            //Relationship between Times Table and Appointment Table One To Many
+            ////Relationship between Times Table and Appointment Table One To Many
             modelBuilder.Entity<Time>()
-                .HasOne(t=> t.Appointements)
-                .WithMany(a=> a.Times)
+                .HasOne(t => t.Appointement)
+                .WithMany(a => a.Times)
                 .HasForeignKey(t => t.AppointmentId);
+
+
+
+
 
 
 
@@ -101,19 +105,14 @@ namespace Infrastrucutre
                 .HasForeignKey(b => b.PatientId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            //RelationShip Between Booking And Appointment One To Many 
-            modelBuilder.Entity<Booking>()
-                .HasOne(b => b.Appointement)
-                .WithMany(a => a.Bookings)
-                .HasForeignKey(b => b.AppointmentId)
+            ////RelationShip Between Booking And Appointment One To Many 
+               modelBuilder.Entity<Appointement>()
+                .HasOne(a => a.Booking)
+                .WithOne(b => b.Appointement)
+                .HasForeignKey<Booking>(b => b.AppointmentId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            //RelationShip Between Booking And Time One To Many 
-            modelBuilder.Entity<Booking>()
-                .HasOne(b => b.Time)
-                .WithMany(a => a.Bookings)
-                .HasForeignKey(b => b.TimeId)
-                .OnDelete(DeleteBehavior.Cascade);
+            
 
 
             //Releation Between Coupon and Patient (Idenitiy Table) One To Many 
@@ -131,6 +130,7 @@ namespace Infrastrucutre
         public DbSet<Time> Times { get; set; }
         public DbSet<Booking> Bookings { get; set; }
         public DbSet<Coupon> Coupons { get; set; }
+      
 
     }
 }

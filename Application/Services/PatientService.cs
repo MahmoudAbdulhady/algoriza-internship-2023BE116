@@ -60,7 +60,7 @@ namespace Application.Services
                     await model.ImageUrl.CopyToAsync(stream);
                 }
             }
-
+            var imageUrl = $"images/{fileName}";
 
             var user = new CustomUser
             {
@@ -72,7 +72,7 @@ namespace Application.Services
                 PhoneNumber = model.PhoneNumber,
                 DateOfBirth = DateTime.Parse(model.DateOfBirth),
                 Gender = model.Gender,
-                ImageUrl= fileName,
+                ImageUrl= imageUrl,
                 AccountRole = AccountRole.Patient
             };
             var userResult = await _userManager.CreateAsync(user, model.Password);
@@ -117,19 +117,19 @@ namespace Application.Services
         {
             var Times = await _patientRepository.GetDoctorApptAsync();
             var doctorSchedules = Times
-                .GroupBy(a => new { a.Appointements.Doctor.User.FullName, a.Appointements.Doctor.Specialization.SpecializationName, a.Appointements.Doctor.Price, a.Appointements.DaysOfTheWeek })
+                .GroupBy(a => new { a.Appointement.Doctor.User.FullName, a.Appointement.Doctor.Specialization.SpecializationName, a.Appointement.Doctor.Price, a.Appointement.Days })
                 .Select(doctorGroup => new AppointmentDTO
                 {
                     DoctorName = doctorGroup.Key.FullName,
                     Specailization = doctorGroup.Key.SpecializationName,
                     Price = doctorGroup.Key.Price,
                     AvailableDay = doctorGroup
-                        .GroupBy(a => a.Appointements.DaysOfTheWeek) // Group by Day
+                        .GroupBy(a => a.Appointement.Days) // Group by Day
                         .Select(dayGroup => new DayScheduleDTO
                         {
                             Day = dayGroup.Key.ToString(),
                             TimeSlots = dayGroup
-                          .Select(a => $"{a.StartTime.ToString(@"hh\:mm tt")} TO {a.EndTime.ToString(@"hh\:mm tt")}")
+                          .Select(a => $"{a.StartTime} TO {a.EndTime}")
                            .ToList()
                         })
                .ToList()
@@ -152,22 +152,22 @@ namespace Application.Services
         /// Throws an exception if the appointment time specified by timeId is not found, if the appointment time is already booked,
         /// if the coupon is invalid or inactive, or if the patient does not meet the criteria to use the coupon.
         /// </exception>
-        public async Task<bool>CreateNewBooking(int timeId, string patientId , string? couponName = null)
+        public async Task<bool>CreateNewBooking(int appointmentId, string patientId , string? couponName = null)
         {
-            var appointmentTime = await _doctorRepository.FindAppointmentTimeById(timeId);
+            var appointmentTime = await _doctorRepository.FindAppointmentByAppointmentId(appointmentId);
             if (appointmentTime == null)
             {
-                throw new Exception($"Appointment time with ID {timeId} not found.");
+                throw new Exception($"Appointment time with ID {appointmentId} not found.");
             }
-            var originalPrice = appointmentTime.Appointements.Doctor.Price;
-            var priceAfterCoupon = appointmentTime.Appointements.Doctor.Price;
+            var originalPrice = appointmentTime.Appointement.Doctor.Price;
+            var priceAfterCoupon = appointmentTime.Appointement.Doctor.Price;
 
 
-            var booking = await _patientRepository.FindyBookingById(timeId);
+            var booking = await _patientRepository.FindyBookingById(appointmentId);
 
             if(booking != null)
             {
-                throw new Exception($"Appointment time with ID {timeId} is already Booked !.");
+                throw new Exception($"Appointment time with ID {appointmentId} is already Booked !.");
             }
 
             //Checking On Coupon
@@ -181,13 +181,23 @@ namespace Application.Services
                     int completedRequests = await _couponRepository.GetNumberOfCompletedRequestByPatientId(patientId);
                     if (completedRequests == 5)
                     {
+                        coupon.PatientId = patientId;
+                        if(coupon.PatientId == patientId && completedRequests == 5)
+                        {
+                            throw new Exception("You have already Used This Coupon!");
+                        }
                         isCouponUsed = true;
-                        priceAfterCoupon = (int)appointmentTime.Appointements.Doctor.Price - 50;
+                        priceAfterCoupon = (int)appointmentTime.Appointement.Doctor.Price - 50;
                     }
-                    else if(completedRequests > 5)
+                    else if(completedRequests == 10)
                     {
+                        coupon.PatientId = patientId;
+                        if (coupon.PatientId == patientId && completedRequests == 11)
+                        {
+                            throw new Exception("You have already Used This Coupon!");
+                        }
                         isCouponUsed = true;
-                        priceAfterCoupon = (int)appointmentTime.Appointements.Doctor.Price - 100;
+                        priceAfterCoupon = (int)appointmentTime.Appointement.Doctor.Price - 100;
                     }
                     
                     else
@@ -203,7 +213,6 @@ namespace Application.Services
 
                 var newBooking = new Booking
                 {
-                    TimeId = appointmentTime.TimeId,
                     AppointmentId = appointmentTime.AppointmentId,
                     PatientId = patientId,
                     IsCouponUsed = isCouponUsed,
@@ -231,7 +240,7 @@ namespace Application.Services
         public async Task<bool> CancelBookingAsync(int bookingId)
         {
             var canceledAppointment =  await _patientRepository.CancelAppointment(bookingId);
-            if(canceledAppointment)
+            if(!canceledAppointment)
             {
                 throw new Exception($"No Appointment with ID: {bookingId} is found");
             }
@@ -251,19 +260,24 @@ namespace Application.Services
         public async Task<IEnumerable<PatientBookingDTO>>GetPatientSpecificBookingsAsync(string patientId)
         {
             var bookings = await _patientRepository.GetPatientBookings();
+            if(bookings == null)
+            {
+                throw new Exception("Error");
+            }
             var patientSchedule = bookings
-                .Where(p => p.PatientId == patientId)
+                .Where(p => p.Appointement.Booking.PatientId == patientId)
                 .Select(group => new PatientBookingDTO
                 {
                     DoctorName = group.Appointement.Doctor.User.FullName,
                     Specailization = group.Appointement.Doctor.Specialization.SpecializationName,
                     Price = group.Appointement.Doctor.Price.ToString(),
                     PhoneNumber = group.Appointement.Doctor.User.PhoneNumber,
-                    Day = group.Appointement.DaysOfTheWeek.ToString(),
+                    Day = group.Appointement.Days.ToString(),
+                    FinalPrice = group.Appointement.Booking.PriceAfterCoupon.ToString(),
                     Image = group.Appointement.Doctor.User.ImageUrl,
-                    StartTime = group.Time.StartTime.ToShortTimeString(),
-                    EndTime = group.Time.EndTime.ToShortTimeString(),
-                    BookingStatus = group.Status.ToString()
+                    StartTime = group.Appointement.Times.FirstOrDefault()?.StartTime,
+                    EndTime = group.Appointement.Times.FirstOrDefault()?.EndTime,
+                    BookingStatus = group.Appointement.Booking.Status.ToString()
                 });
             return patientSchedule;
         }

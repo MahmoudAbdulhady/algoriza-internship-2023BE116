@@ -32,5 +32,9 @@ namespace Domain.Interfaces
         Task<RequestsDTO> GetNumberOfRequests();
         Task<int> GetNumberOfDoctorsAddedLast24HoursAsync();
 
+        Task<bool> GetBookingByDoctorId(int doctorId);
+        Task<Appointement> GetAppointmentByDoctorId(int doctorId);
+        Task<bool> DeleteDoctorAppointmentAsync(Appointement doctrorAppointment);
+
     }
 }

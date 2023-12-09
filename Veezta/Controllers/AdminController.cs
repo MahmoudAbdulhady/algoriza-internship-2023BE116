@@ -152,15 +152,5 @@ namespace Veezta.Controllers
             return Ok(count);
         }
 
-        [HttpPost("sendEmail/{doctorId}")]
-        public async Task<IActionResult> SendEmailToDoctor(string doctorId)
-        {
-            await _adminServices.SendEmailToDoctorAsync(doctorId);
-            return Ok("Email sent successfully.");
-        }
-
-
-
-
     }
 }
