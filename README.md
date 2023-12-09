@@ -13,6 +13,7 @@ SQL Server (or any other EF Core compatible database)
 
 
 Detailed Installation Steps
+
 1-Clone the Repository
 [https://github.com/your-repository/Veezta.git](https://github.com/MahmoudAbdulhady/algoriza-internship-2023BE116)
 2- Database Configuration
@@ -22,6 +23,26 @@ Update the appsettings.json file in the project root with your database connecti
 Use Entity Framework Core to set up your database schema. Run the following command:
 add-migration 
 update-database
+
+
+## :zap: Features
+Doctor Management
+Add Doctors: Easily onboard new doctors into the system with detailed profiles.
+Remove Doctors: Safely remove doctors from the system when they are no longer available or affiliated.
+Sending The Registered Email and Password 
+
+Patient Management
+Patient Registration: Quick and easy registration process for new patients, creating comprehensive patient profiles.
+Appointment Booking: Patients can book appointments with their preferred doctors, selecting available time slots based on their convenience.
+Appointment Cancellation: Provides flexibility for patients to cancel their appointments, with notifications sent to the respective doctor.
+
+Appointment Management
+Create Appointments: Admins can create appointments for patients, assigning them to the appropriate doctors.
+Manage Appointments: Comprehensive management of appointment schedules, including rescheduling and reminders.
+
+Vouchers and Discounts
+Voucher System: Implement a voucher system where patients can redeem vouchers for discounts or special offers on medical services based on the number of completed requests.
+
 
 
 
@@ -47,23 +68,7 @@ Veezta
 |    ├── appsettings.json
 |    └── Program.cs
 
-## :zap: Features
-Doctor Management
-Add Doctors: Easily onboard new doctors into the system with detailed profiles.
-Remove Doctors: Safely remove doctors from the system when they are no longer available or affiliated.
-Sending The Registered Email and Password 
 
-Patient Management
-Patient Registration: Quick and easy registration process for new patients, creating comprehensive patient profiles.
-Appointment Booking: Patients can book appointments with their preferred doctors, selecting available time slots based on their convenience.
-Appointment Cancellation: Provides flexibility for patients to cancel their appointments, with notifications sent to the respective doctor.
-
-Appointment Management
-Create Appointments: Admins can create appointments for patients, assigning them to the appropriate doctors.
-Manage Appointments: Comprehensive management of appointment schedules, including rescheduling and reminders.
-
-Vouchers and Discounts
-Voucher System: Implement a voucher system where patients can redeem vouchers for discounts or special offers on medical services based on the number of completed requests.
 
 
 
