@@ -110,7 +110,7 @@ app.UseStaticFiles();
 
 var scope = app.Services.CreateScope();
 var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-await DataSeeder.EnsureRolesAsync(roleManager);
+//await DataSeeder.EnsureRolesAsync(roleManager);
 
 
 
