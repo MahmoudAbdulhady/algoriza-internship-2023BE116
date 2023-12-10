@@ -14,6 +14,6 @@ namespace Application.Contracts
          Task<bool> CreateCouponAsync(CreateCouponDTO model);
          Task<bool>DeactivateCouponAsync(int couponId);
          Task<bool>DeleteCouponAsync(int couponId);
-         Task<bool>UpdateCouponAsnyc(CouponUpdateDTO model);
+         Task<bool>UpdateCouponAsync(CouponUpdateDTO model);
     }
 }

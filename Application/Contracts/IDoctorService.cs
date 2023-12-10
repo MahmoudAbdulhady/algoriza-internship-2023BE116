@@ -14,7 +14,7 @@ namespace Application.Contracts
         Task<bool> AddDoctorAppointmentAsync(AddAppointmentDTO doctorDTO);
         Task<bool> DeleteTimeAppointmentAsync(int appointmentId);
         Task<bool> DoctorUpdateAppointmentAsync(int timeId, UpdateAppointmentDTO model);
-        Task<bool> DoctorConfirmCheckUp(int bookingId);
+        Task<bool> DoctorConfirmCheckUpAsync(int bookingId);
         
 
 

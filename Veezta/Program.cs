@@ -9,6 +9,7 @@ using Infrastrucutre.Data;
 using Infrastrucutre.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -68,8 +69,13 @@ builder.Services.AddScoped<IEmailSender, EmailSender>();
 
 
 
-
-
+//Logging Configuration 
+var logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .Enrich.FromLogContext()
+    .CreateLogger();    
+builder.Logging.ClearProviders();
+builder.Logging.AddSerilog(logger);
 
 
 
@@ -99,7 +105,7 @@ app.UseStaticFiles();
 //    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 //    await DataSeeder.SeedData(userManager, roleManager);
 //   await DataSeeder.EnsureRolesAsync(roleManager);
-  
+
 //}
 
 var scope = app.Services.CreateScope();

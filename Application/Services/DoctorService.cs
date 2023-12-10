@@ -5,6 +5,7 @@ using Domain.Entities;
 using Domain.Enums;
 using Domain.Interfaces;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -21,15 +22,17 @@ namespace Application.Services
         private readonly IDoctorRepository _doctorRepository;
         private readonly IAdminService _adminService;
         private readonly IPatientRepository _patientRepository;
+        private readonly ILogger<DoctorService> _logger;
        
         public DoctorService
-            (UserManager<CustomUser> userManager, SignInManager<CustomUser> signInManager, IDoctorRepository doctorRepository, IAdminService adminService, IPatientRepository patientRepository,IEmailSender emailSender)
+            (UserManager<CustomUser> userManager, SignInManager<CustomUser> signInManager, IDoctorRepository doctorRepository, IAdminService adminService, IPatientRepository patientRepository,IEmailSender emailSender , ILogger<DoctorService> logger)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _doctorRepository = doctorRepository;
             _adminService = adminService; 
             _patientRepository = patientRepository;
+            _logger = logger;
             
         }
 
@@ -71,16 +74,19 @@ namespace Application.Services
                 throw new Exception("No Appointments found for this Doctor");
             }
 
-            var selectedBookings = doctorBookings.Select(group => new DoctorBookingsDTO
+            var selectedBookings = doctorBookings
+                .Select(group => new DoctorBookingsDTO
             {
                 PatientName = group.Booking?.Patient.FullName ?? "Unknown",
-                Age = group.Booking?.Patient?.DateOfBirth.ToString() ?? "Unknown",
+                Age = CalculateAge(group.Booking?.Patient?.DateOfBirth).ToString() ?? "Unknown",
                 Day = group.Days.ToString(),
                 PhoneNumber = group.Booking?.Patient?.PhoneNumber ?? "Unknown",
                 StartTime = group.Times.FirstOrDefault()?.StartTime ?? "Unknown",
                 EndTime = group.Times.FirstOrDefault()?.EndTime ?? "Unknown",
-                Image = group.Booking?.Patient?.ImageUrl ?? "null" // Use a default or placeholder image if null
-            }).ToList();
+                Image = group.Booking?.Patient?.ImageUrl ?? "null" 
+
+            })
+                .ToList();
 
 
             return (selectedBookings, totalCounts);
@@ -213,15 +219,47 @@ namespace Application.Services
         /// <exception cref="Exception">
         /// Thrown when the specified check-up appointment with the provided ID is not found.
         /// </exception>
-        public async Task<bool>DoctorConfirmCheckUp(int bookingId )
+        public async Task<bool> DoctorConfirmCheckUpAsync(int bookingId )
         {
-          var confirmCheckupTime =  await _doctorRepository.ConfirmCheckup(bookingId);
-            if(!confirmCheckupTime)
+            try
             {
-                throw new Exception($"No appointment with ID : {bookingId} was found");
+                var confirmCheckupTime = await _doctorRepository.ConfirmCheckup(bookingId);
+
+                if (!confirmCheckupTime)
+                {
+                    // Throwing an exception when a condition is not met.
+                    throw new Exception($"No Booking to confirm was found with ID: {bookingId}");
+                }
+
+                return true;
             }
-            return true;
+            catch (Exception ex)
+            {
+                // Logging the exception.
+                _logger.LogError(ex, "Error in confirming check-up for booking ID {BookingId}", bookingId);
+
+                // Rethrowing the exception to be handled by the caller.
+                // Here, we are rethrowing the same exception caught for consistency.
+                throw new Exception($"An error occurred while confirming the booking with ID: {bookingId}", ex);
+            }
         }
+
+        public static int CalculateAge(DateTime? dateOfBirth)
+        {
+            if (!dateOfBirth.HasValue)
+                return 0;
+
+            var today = DateTime.Today;
+            var age = today.Year - dateOfBirth.Value.Year;
+
+            // Subtract one year if the current date is before the birthday in the current year
+            if (dateOfBirth.Value.Date > today.AddYears(-age))
+                age--;
+
+            return age;
+        }
+
+
     }
 
   

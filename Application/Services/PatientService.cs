@@ -159,7 +159,7 @@ namespace Application.Services
         /// <exception cref="System.Exception">Thrown if the appointment time is not found, 
         /// if the appointment time is already booked, if the coupon is invalid, inactive, 
         /// or already used, or if the patient does not have enough completed requests to use the coupon.</exception>
-        public async Task<bool>CreateNewBooking(int appointmentId, string patientId , string? couponName = null)
+        public async Task<bool> CreateNewBookingAsync(int appointmentId, string patientId , string? couponName = null)
             {
                 var appointmentTime = await _doctorRepository.FindAppointmentByAppointmentId(appointmentId);
                 if (appointmentTime == null)
@@ -246,12 +246,8 @@ namespace Application.Services
         /// </exception>
         public async Task<bool> CancelBookingAsync(int bookingId)
         {
-            var canceledAppointment =  await _patientRepository.CancelAppointment(bookingId);
-            if(!canceledAppointment)
-            {
-                throw new Exception($"No Appointment with ID: {bookingId} is found");
-            }
-            return true;
+            return await _patientRepository.CancelAppointment(bookingId);
+                   
         }
 
         /// <summary>
@@ -270,7 +266,7 @@ namespace Application.Services
         public async Task<IEnumerable<PatientBookingDTO>>GetPatientSpecificBookingsAsync(string patientId)
         {
             var bookings = await _patientRepository.GetPatientBookings();
-            if(bookings == null)
+            if(bookings == null )
             {
                 throw new Exception("Error");
             }

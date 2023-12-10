@@ -20,10 +20,9 @@ namespace Application.Contracts
         Task<(IEnumerable<PatientDTO>, int)> GetAllPatientsAsync(PaginationAndSearchDTO request);
         Task<PatientDTO> GetPatientByIdAsync(string patientId);
         Task<IEnumerable<TopFiveSpecalizationDTO>> GetTopSpecializationsAsync();
-        Task<IEnumerable<TopTenDoctorDTO>> GetTopTenDoctors();
+        Task<IEnumerable<TopTenDoctorDTO>> GetTopTenDoctorsAsync();
         Task<RequestsDTO> GetNumberOfRequestsAsync();
         Task<int> GetNumberOfDoctorsAddedLast24HoursAsync();
-
         Task SendEmailToDoctorAsync(string doctorId);
 
     }

@@ -399,7 +399,7 @@ namespace Application.Services
         /// Each object includes the doctor's full name, specialization, image URL, and the count of requests or bookings associated with them, 
         /// sorted in descending order by the request count.
         /// </returns>
-        public async Task<IEnumerable<TopTenDoctorDTO>> GetTopTenDoctors()
+        public async Task<IEnumerable<TopTenDoctorDTO>> GetTopTenDoctorsAsync()
         {
             var completedRequests = await _adminRepository.GetTopTenDoctors();
 

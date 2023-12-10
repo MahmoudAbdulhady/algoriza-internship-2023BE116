@@ -13,10 +13,12 @@ namespace Veezta.Controllers
     public class DoctorController : ControllerBase
     {
         private readonly IDoctorService _doctorService;
+        private readonly ILogger<DoctorController> _logger;
 
-        public DoctorController(IDoctorService doctorService)
+        public DoctorController(IDoctorService doctorService, ILogger<DoctorController> logger)
         {
             _doctorService = doctorService;
+            _logger = logger;
         }
 
         [HttpPost("Login")]
@@ -34,11 +36,13 @@ namespace Veezta.Controllers
         [HttpPost("GetSpecificDoctorAppointment")]
         public async Task<IActionResult> GetSpecificDoctorAppointment(int doctorId , [FromBody]PaginationAndSearchDTO request)
         {
+            _logger.LogInformation("Action Started");
             var (appointments,totalcounts) = await _doctorService.GetAppointmentsForDoctorAsync(doctorId , request);
+            _logger.LogInformation("Action Completed");
             return Ok(new { appointments, totalcounts });
         }
 
-        [HttpGet("AddDoctorAppointment")]
+        [HttpPost("AddDoctorAppointment")]
         public async Task<IActionResult> AddDoctorAppointment([FromBody]AddAppointmentDTO model)
         {
             var appointment = await _doctorService.AddDoctorAppointmentAsync(model);
@@ -75,7 +79,7 @@ namespace Veezta.Controllers
         [HttpPost("ConfirmCheckup")]
         public async Task<IActionResult>CheckupStatus(int bookingId)
         {
-            var success = await _doctorService.DoctorConfirmCheckUp(bookingId);
+            var success = await _doctorService.DoctorConfirmCheckUpAsync(bookingId);
              return Ok("Booking status updated successfully");
 
         }

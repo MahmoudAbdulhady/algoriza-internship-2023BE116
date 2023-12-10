@@ -54,6 +54,10 @@ namespace Infrastrucutre.Repositories
         public async Task<bool> CancelAppointment(int bookingId)
         {
             var booking = await _veeztaDbContext.Bookings.FindAsync(bookingId);
+            if(booking == null)
+            {
+                throw new Exception($"No Appointment with ID: { bookingId } is found");
+            }
             if (booking != null)
             {
                 if(booking.Status == BookingStatus.Pending)
@@ -64,7 +68,7 @@ namespace Infrastrucutre.Repositories
                 }
                 else
                 {
-                    throw new Exception($"Appointnemt Id {bookingId} can't be cancled since its a Completed Appointment");
+                    throw new Exception($"Appointnemt Id {bookingId} can't be cancled since its a Completed Appointment or Pending Appointment");
                 }
             }
             return true;

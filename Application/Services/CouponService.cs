@@ -101,7 +101,7 @@ namespace Application.Services
         /// <returns>
         /// A boolean value indicating whether the update of the coupon was successful.
         /// </returns>
-        public async Task<bool> UpdateCouponAsnyc(CouponUpdateDTO model)
+        public async Task<bool> UpdateCouponAsync(CouponUpdateDTO model)
         {
             var foundCoupon = await _couponRepository.FindCouponById(model.CouponId);
             if (foundCoupon == null)
