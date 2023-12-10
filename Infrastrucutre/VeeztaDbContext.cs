@@ -87,17 +87,6 @@ namespace Infrastrucutre
 
 
 
-
-
-
-
-            ////RelationShip Between Booking and Doctor One To Many 
-            //modelBuilder.Entity<Booking>()
-            //    .HasOne(b => b.Doctor)
-            //    .WithMany(d => d.Bookings)
-            //    .HasForeignKey(b => b.DoctorId);
-
-
             //RelationShip Between Booking And Patient One To Many 
             modelBuilder.Entity<Booking>()
                 .HasOne(b => b.Patient)
