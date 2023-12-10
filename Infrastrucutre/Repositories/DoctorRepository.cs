@@ -86,14 +86,14 @@ namespace Infrastrucutre.Repositories
         {
 
             var query = _veeztaDbContext.Appointments
-                .Include(b=> b.Booking) // Booking Identity 
-                .Include(d=> d.Doctor) // Doctor Table
+                .Include(b=> b.Booking) // Booking Table 
+                //./*Include(d=> d.Doctor) // Doctor Table*/
                 .Include(u=> u.Booking.Patient) // Identity Table
                 .Include(t=> t.Times) // Times Table
-                .Where(a=> a.DoctorId == doctorId)
+                .Where(a=> a.DoctorId == doctorId && a.Booking != null)
                 .AsQueryable();
 
-            if (!string.IsNullOrWhiteSpace(request.SearchTerm))
+            if (!string.IsNullOrEmpty(request.SearchTerm))
             {
                 var searchTerm = request.SearchTerm;
 
@@ -105,11 +105,11 @@ namespace Infrastrucutre.Repositories
             }
      
             int totalRecords = await query.CountAsync();
-            var bookings = await query.Skip((request.PageNumber - 1) * request.PageSize)
+            var appointements = await query.Skip((request.PageNumber - 1) * request.PageSize)
                                       .Take(request.PageSize)
                                       .ToListAsync();
 
-            return (bookings, totalRecords);
+            return (appointements, totalRecords);
 
         }
 
