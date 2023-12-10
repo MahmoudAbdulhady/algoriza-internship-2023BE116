@@ -13,6 +13,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 using Application.Contracts;
+using System.Globalization;
+
 namespace Application.Services
 {
     public class AdminServices : IAdminService
@@ -49,6 +51,10 @@ namespace Application.Services
         public async Task<bool> AddDocotorAsync(DoctorRegisterDTO model)
         {
 
+            CultureInfo provider =  new CultureInfo("en-US");
+
+            string[] formats = { "yyyy/MM/dd", "yyyy/M/dd", "yyyy/M/d", "yyyy/MM/d", "dd/MM/yyyy", "dd/M/yyyy", "d/MM/yyyy", "d/M/yyyy" };
+
             if (model.ImageUrl == null || model.ImageUrl.Length == 0)
             {
                 throw new Exception("No Image were Uploaded");
@@ -75,7 +81,7 @@ namespace Application.Services
                 LastName = model.LastName,
                 FullName = model.FirstName + " " + model.LastName,
                 PhoneNumber = model.PhoneNumber,
-                DateOfBirth = DateTime.Parse(model.DateOfBirth),
+                DateOfBirth = DateTime.ParseExact(model.DateOfBirth , formats , provider),
                 Gender = model.Gender,
                 ImageUrl = imageUrl,
                 AccountRole = AccountRole.Doctor

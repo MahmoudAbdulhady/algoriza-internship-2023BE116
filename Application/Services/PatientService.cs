@@ -7,6 +7,7 @@ using Domain.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -45,6 +46,8 @@ namespace Application.Services
         /// <exception cref="Exception"></exception>
         public async Task<bool> RegisterPatientAsync(PatientRegisterDTO model)
         {
+            CultureInfo provider = new CultureInfo("en-US");
+            string[] formats = { "yyyy/MM/dd", "yyyy/M/dd", "yyyy/M/d", "yyyy/MM/d", "dd/MM/yyyy", "dd/M/yyyy", "d/MM/yyyy", "d/M/yyyy" };
             string fileName = null; 
 
             // Check if an image is provided
@@ -70,7 +73,7 @@ namespace Application.Services
                 LastName = model.LastName,
                 FullName = model.FirstName + " " + model.LastName,
                 PhoneNumber = model.PhoneNumber,
-                DateOfBirth = DateTime.Parse(model.DateOfBirth),
+                DateOfBirth = DateTime.ParseExact(model.DateOfBirth , formats , provider),
                 Gender = model.Gender,
                 ImageUrl= imageUrl,
                 AccountRole = AccountRole.Patient

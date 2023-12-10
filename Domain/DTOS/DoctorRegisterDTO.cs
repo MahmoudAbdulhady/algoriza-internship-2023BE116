@@ -35,7 +35,7 @@ namespace Domain.DTOS
 
         [Phone]
         [Required]
-        [RegularExpression(@"^\d{11}$", ErrorMessage = "The phone number must be exactly 10 digits.")]
+        [RegularExpression(@"^\+\d{1,3}\d{10}$", ErrorMessage = "Invalid phone number format. and max length is 11")]
         public string PhoneNumber { get; set; }
 
         [Required]
