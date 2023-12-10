@@ -21,10 +21,12 @@ Detailed Installation Steps
 2- Database Configuration
 Update the appsettings.json file in the project root with your database connection string. This step is crucial for connecting the API to your SQL Server database.
 
-3-Apply Database Migrations
+3-Apply Database Migrations (Incase you  don't want to use the backup database you can use the following)
 Use Entity Framework Core to set up your database schema. Run the following command:
 add-migration 
 update-database
+
+4-Make the veezta as the startup project and run the application
 
 
 ## :zap: Features
